@@ -1,0 +1,7 @@
+.babelrc
+.gitignore
+.travis.yml
+bin/rename
+doc/
+spec/
+src/

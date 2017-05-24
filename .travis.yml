@@ -1,0 +1,6 @@
+before_install: 
+  - npm install --ignore-scripts
+language: node_js
+node_js:
+  - "5.10"
+  - "4.4"

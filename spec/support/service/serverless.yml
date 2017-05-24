@@ -1,0 +1,14 @@
+service: aws-nodejs
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+plugins:
+  - serverless-plugin-localstack
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - sns: ${env:EXISTING_TOPIC_ARN}

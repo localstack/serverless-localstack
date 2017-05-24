@@ -1,0 +1,34 @@
+{
+  "name": "serverless-plugin-localstack",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "test": "jasmine",
+    "test_integration": "TMPDIR=/tmp jasmine --config=spec/support/jasmine_integration.json",
+    "test:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine",
+    "test:cover": "jasmine --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/todo"
+  },
+  "author": "TODO",
+  "license": "MIT",
+  "bugs": {
+    "url": "TODO"
+  },
+  "homepage": "TODO",
+  "dependencies": {
+    "aws-sdk": "^2.7.13"
+  },
+  "devDependencies": {
+    "jasmine": "^2.6.0",
+    "chai": "^3.5.0",
+    "nodemon": "^1.11.0",
+    "source-map-support": "^0.4.0",
+    "sinon": "^1.17.5"
+  }
+}
