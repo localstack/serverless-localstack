@@ -20,6 +20,9 @@ describe("LocalstackPlugin", () => {
         beforeEach(() => {
           this.serverless={
             service: {
+              cli: {
+                log: () => {}
+              }
             },
             providers: {
               aws:{
@@ -44,6 +47,9 @@ describe("LocalstackPlugin", () => {
         beforeEach(() => {
           this.serverless={
             service: {
+              cli: {
+                log: () => {}
+              },
               custom: {
               },
             },
@@ -88,6 +94,9 @@ describe("LocalstackPlugin", () => {
         beforeEach(() => {
           this.serverless={
             service: {
+              cli: {
+                log: () => {}
+              },
               custom: {
                 localstack: {}
               },
@@ -116,6 +125,9 @@ describe("LocalstackPlugin", () => {
       beforeEach(() => {
         this.serverless={
           service: {
+            cli: {
+              log: () => {}
+            },
             custom: {
               localstack: {
                 endpoint: './example/localstack_endpoints.json',
@@ -146,39 +158,15 @@ describe("LocalstackPlugin", () => {
       })
 
     });
-  })
-
-  describe('"before:aws:deploy:deploy:createStack" hook', () => {
-    beforeEach(() => {
-
-      this.serverless={
-        service: {
-          custom: {
-            localstack: {
-              endpoint: './example/localstack_endpoints.json',
-            },
-          },
-        },
-        providers: {
-          aws:{
-            options: {},
-            request: ()=>{}
-          }
-        }
-      };
-      this.instance = new LocalstackPlugin(this.serverless, {})
-
-      this.hook = this.instance.hooks["before:aws:deploy:deploy:createStack"]
-    });
-
-    it('should be defined', () => {
-      expect(this.hook).not.to.be.undefined
-    });
+  });
 
     it('should bind the provider request method', ()=> {
       var requestMethod = jasmine.createSpy('requestMethod')
       this.serverless={
         service: {
+          cli: {
+            log: () => {}
+          },
           custom: {
             localstack: {
               endpoint: './example/localstack_endpoints.json',
@@ -222,6 +210,9 @@ describe("LocalstackPlugin", () => {
         this.FakeService = FakeService
         const options={}
         this.serverless = new Serverless(options);
+        this.serverless.cli = {
+          log: () => {}
+        }
         this.serverless.service.custom = {
           localstack: {
             endpoint: './example/localstack_endpoints.json',
@@ -267,5 +258,4 @@ describe("LocalstackPlugin", () => {
       this.endpoint=undefined
     })
 
-  });
 })
