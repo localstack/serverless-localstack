@@ -1,0 +1,19 @@
+version: '2'
+services:
+  serverless-node:
+    image: node:latest
+    working_dir: /app
+    volumes:
+      - ..:/app
+      - ~/.aws/:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_PROFILE
+      - AWS_SESSION_TOKEN
+      - AWS_SECURITY_TOKEN
+  localstack:
+    image: atlassianlabs/localstack:latest
+    ports:
+      - "4567-4578"
+      - "8080"

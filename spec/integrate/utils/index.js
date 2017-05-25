@@ -9,6 +9,8 @@ const fse = require('fs-extra');
 const execSync = require('child_process').execSync;
 const AWS = require('aws-sdk');
 
+const packageJson = require('../../../package')
+
 // const serverlessExec = path.join(__dirname, '..', '..', 'bin', 'serverless');
 const serverlessExec = 'serverless';
 //
@@ -26,13 +28,24 @@ const replaceTextInFile = (filePath, subString, newSubString) => {
 const installPlugin = (tmpDir) => {
 
 
-  const pluginDir=path.join(tmpDir,
-    '.serverless_plugins',
-    'serverless-plugin-localstack');
-  const rootPlugin=path.join(__dirname, '..', '..', '..', 'index.js')
-  fse.mkdirsSync(pluginDir)
+  const pluginsDir=path.join(tmpDir,
+    '.serverless_plugins');
+  const myPluginDir=path.join(pluginsDir,
+    `${packageJson.name}`);
+  const rootPlugin=path.join(__dirname, '..', '..', '..', `${packageJson.name}-${packageJson.version}.tgz`)
 
-  console.log(`Plugin installed to: ${pluginDir}`)
+
+  fse.mkdirsSync(pluginsDir)
+  // TODO - use nodejs
+  // TODO - copy directories locally from node_modules
+  execSync(`tar -xz -C ${pluginsDir} -f ${rootPlugin}`)
+  execSync(`mv ${pluginsDir}/package ${pluginsDir}/${packageJson.name}`)
+  for (dependency in packageJson.dependencies){
+    moduleDir=path.join('..','..','..','node_modules','dependency');
+    fse.copySync(dependency,path.join(myPluginDir,'node_modules'), { clobber: true, preserveTimestamps: true });
+  }
+
+  console.log(`Plugin installed to: ${myPluginDir}`)
 
   fse.copySync(rootPlugin,path.join(pluginDir, 'index.js'), { clobber: true, preserveTimestamps: true });
 };

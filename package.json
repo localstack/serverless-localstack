@@ -7,7 +7,7 @@
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "test": "jasmine",
-    "test_integration": "TMPDIR=/tmp jasmine --config=spec/support/jasmine_integration.json",
+    "test_integration": "npm pack && TMPDIR=/tmp jasmine --config=spec/support/jasmine_integration.json",
     "test:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine",
     "test:cover": "jasmine --coverage"
   },
@@ -22,13 +22,18 @@
   },
   "homepage": "TODO",
   "dependencies": {
-    "aws-sdk": "^2.7.13"
+    "aws-sdk": "^2.7.13",
+    "bluebird": "^3.4.6"
   },
   "devDependencies": {
     "jasmine": "^2.6.0",
     "chai": "^3.5.0",
     "nodemon": "^1.11.0",
     "source-map-support": "^0.4.0",
-    "sinon": "^1.17.5"
+    "sinon": "^1.17.5",
+    "serverless": "^1.12.1",
+    "request-promise": "^4.1.1",
+    "request": "https://registry.npmjs.org/request/-/request-2.79.0.tgz",
+    "fs-extra": "^0.26.7"
   }
 }

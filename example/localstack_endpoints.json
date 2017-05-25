@@ -1,11 +1,6 @@
 {
-    "awslambda": {
-        "ap-northeast-1": "http://localstack:4574",
-        "eu-central-1": "http://localstack:4574",
-        "eu-west-1": "http://localstack:4574",
-        "us-east-1": "http://localstack:4574",
-        "us-west-2": "http://localstack:4574"
-    },
+    "Lambda": "http://localstack:4574",
+    
     "cloudformation": {
         "ap-northeast-1": "http://localstack:4581",
         "ap-northeast-2": "http://localstack:4581",
