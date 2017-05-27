@@ -11,6 +11,6 @@ services:
 
 before_install:
 script:
-  echo "127.0.0.1  localstack" | sudo tee -a /etc/hosts
-  npm test
-  npm run test_integration
+  - echo "127.0.0.1  localstack" | sudo tee -a /etc/hosts
+  - npm test
+  - npm run test_integration
