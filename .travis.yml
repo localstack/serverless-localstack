@@ -1,6 +1,16 @@
-before_install: 
+before_install:
+  - docker-compose pull
+  - docker-compose run localstack
   - npm install --ignore-scripts
 language: node_js
 node_js:
   - "5.10"
   - "4.4"
+services:
+  - docker
+
+before_install:
+script:
+  echo "127.0.0.1  localstack" | sudo tee -a /etc/hosts
+  npm test
+  npm run test_integration

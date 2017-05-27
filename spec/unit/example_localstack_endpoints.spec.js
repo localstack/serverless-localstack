@@ -23,7 +23,6 @@ describe("example/localstack_endpoints.json", () => {
       'SQS',
     ]
     services.forEach( (service) => {
-
       expect(example_endpoints[service]).to.be.a('string', `${service} is not defined`)
     });
   });

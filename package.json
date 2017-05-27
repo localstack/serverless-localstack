@@ -2,12 +2,12 @@
   "name": "serverless-plugin-localstack",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "test": "jasmine",
-    "test_integration": "npm pack && TMPDIR=/tmp jasmine --config=spec/support/jasmine_integration.json",
+    "test_integration": "TMPDIR=/tmp jasmine --config=spec/support/jasmine_integration.json",
     "test:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine",
     "test:cover": "jasmine --coverage"
   },

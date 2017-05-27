@@ -40,12 +40,42 @@ class LocalstackPlugin {
     }
     this.providerRequest = awsProvider.request.bind(awsProvider)
     awsProvider.request=this.interceptRequest.bind(awsProvider)
+
+    // this.providerGetCredentials = awsProvider.getCredentials.bind(awsProvider)
+    // awsProvider.getCredentials=this.interceptGetCredentials.bind(this)
   }
+
+  // interceptGetCredentials(){
+  //   credentials = this.providerGetCredentials()
+  //
+  //   if(this.endpoint){
+  //     const endpointJson = this.endpoint
+  //     if(endpointJson[service]){
+  //
+  //       this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
+  //       awsService.setEndpoint(endpointJson[service])
+  //      FIXME - DONT HAVE ACCESS TO THE SERVICE...
+  //     }
+  //   }
+  // }
 
 
   interceptRequest(service, method, params) {
     const that = this;
     const credentials = that.getCredentials();
+
+
+    this.serverless.cli.log(`Using serverless-localstack plugin`)
+
+    if(this.options.serverless_localstack && this.options.serverless_localstack.endpoints){
+      const endpointJson = this.options.serverless_localstack.endpoints
+      if(endpointJson[service]){
+
+        this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
+        credentials.endpoint = endpointJson[service]
+      }
+    }
+
     const persistentRequest = (f) => new BbPromise((resolve, reject) => {
       const doCall = () => {
         f()
@@ -65,14 +95,14 @@ class LocalstackPlugin {
     return persistentRequest(() => {
       const awsService = new that.sdk[service](credentials);
 
-      if(this.options.serverless_localstack && this.options.serverless_localstack.endpoints){
-        const endpointJson = this.options.serverless_localstack.endpoints
-        if(endpointJson[service]){
-
-          this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
-          awsService.setEndpoint(endpointJson[service])
-        }
-      }
+      // if(this.options.serverless_localstack && this.options.serverless_localstack.endpoints){
+      //   const endpointJson = this.options.serverless_localstack.endpoints
+      //   if(endpointJson[service]){
+      //
+      //     this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
+      //     awsService.setEndpoint(endpointJson[service])
+      //   }
+      // }
 
 
       const req = awsService[method](params);

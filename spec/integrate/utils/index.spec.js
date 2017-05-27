@@ -24,6 +24,12 @@ describe('Test utils', () => {
     });
   });
 
+  describe('#createTestService()', () => {
+    it('should copy the localstack_endpoints.json', ()=> {
+      fail('TODO')
+    });
+  });
+
   describe('Localstack Support', ()=> {
 
     const snsEndpoint="http://localstack:4575"
@@ -88,6 +94,7 @@ describe('Test utils', () => {
     });
 
     describe("Lambda", () => {
+      // TODO require
       const lambdaEndpoint='http://localstack:4574';
       const endpoint=path.join(__dirname, 'localstack_endpoints.json')
       beforeAll((done) => {
@@ -98,7 +105,7 @@ describe('Test utils', () => {
 
       describe("#deployService()", ()=> {
         it("should create a local function", ()=> {
-          testUtils.deployService(`--endpoint file://${endpoint}`)
+          testUtils.deployService()
           .then( (response) => {
             return request(lambdaEndpoint + '/2015-03-31/functions/')
           })

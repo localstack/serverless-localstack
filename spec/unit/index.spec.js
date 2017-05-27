@@ -1,4 +1,4 @@
-const LocalstackPlugin = require('../../index');
+const LocalstackPlugin = require('../../src/index');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
@@ -7,8 +7,6 @@ const Serverless = require('serverless')
 const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider')
 
 describe("LocalstackPlugin", () => {
-
-
 
   describe('#constructor()', () => {
 
@@ -257,5 +255,9 @@ describe("LocalstackPlugin", () => {
     afterEach(()=>{
       this.endpoint=undefined
     })
+
+    it('should allow the endpoint.json to be referenced from the working dir', () => {
+      fail('todo')
+    });
 
 })

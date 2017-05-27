@@ -7,6 +7,10 @@ provider:
 plugins:
   - serverless-plugin-localstack
 
+custom:
+  localstack:
+    endpoint: localstack_endpoints.json
+
 functions:
   hello:
     handler: handler.hello

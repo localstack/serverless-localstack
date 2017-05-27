@@ -32,22 +32,27 @@ const installPlugin = (tmpDir) => {
     '.serverless_plugins');
   const myPluginDir=path.join(pluginsDir,
     `${packageJson.name}`);
-  const rootPlugin=path.join(__dirname, '..', '..', '..', `${packageJson.name}-${packageJson.version}.tgz`)
+  const rootPluginDir=path.join(__dirname, '..', '..', '..')
 
 
   fse.mkdirsSync(pluginsDir)
+
   // TODO - use nodejs
   // TODO - copy directories locally from node_modules
-  execSync(`tar -xz -C ${pluginsDir} -f ${rootPlugin}`)
-  execSync(`mv ${pluginsDir}/package ${pluginsDir}/${packageJson.name}`)
-  for (dependency in packageJson.dependencies){
-    moduleDir=path.join('..','..','..','node_modules','dependency');
-    fse.copySync(dependency,path.join(myPluginDir,'node_modules'), { clobber: true, preserveTimestamps: true });
-  }
+  console.log(`ln -s ${rootPluginDir} ${myPluginDir}`)
+  execSync(`ln -s ${rootPluginDir} ${myPluginDir}`)
+
+  // execSync(`tar -xz -C ${pluginsDir} -f ${rootPlugin}`)
+  // execSync(`mv ${pluginsDir}/package ${pluginsDir}/${packageJson.name}`)
+  // for (dependency in packageJson.dependencies){
+    // moduleDir=path.join('..','..','..','node_modules','dependency');
+    // fse.copySync(dependency,path.join(myPluginDir,'node_modules'), { clobber: true, preserveTimestamps: true });
+  // }
 
   console.log(`Plugin installed to: ${myPluginDir}`)
+  // throw 'wobbly'
 
-  fse.copySync(rootPlugin,path.join(pluginDir, 'index.js'), { clobber: true, preserveTimestamps: true });
+  // fse.copySync(rootPlugin,path.join(pluginDir, 'index.js'), { clobber: true, preserveTimestamps: true });
 };
 
 module.exports = {
@@ -201,8 +206,8 @@ module.exports = {
     return logsString;
   },
 
-  deployService(args='') {
-    execSync(`${serverlessExec} deploy ${args}`, { stdio: 'inherit' });
+  deployService() {
+    execSync(`${serverlessExec} deploy`, { stdio: 'inherit' });
   },
 
   removeService() {
