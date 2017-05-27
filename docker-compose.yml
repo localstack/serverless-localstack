@@ -4,7 +4,7 @@ services:
     image: node:latest
     working_dir: /app
     volumes:
-      - ..:/app
+      - .:/app
       - ~/.aws/:/root/.aws
     environment:
       - AWS_ACCESS_KEY_ID

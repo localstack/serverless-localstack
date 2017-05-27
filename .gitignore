@@ -1,3 +1,5 @@
 /doc
 /lib
 /node_modules
+example/service/.serverless
+example/service/.serverless_plugins
