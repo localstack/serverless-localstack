@@ -1,5 +1,4 @@
 {
-
     "APIGateway": "http://localhost:4567",
     "CloudFormation": "http://localstack:4581",
     "CloudWatch":"http://localhost:4582",

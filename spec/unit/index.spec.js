@@ -1,10 +1,13 @@
 const LocalstackPlugin = require('../../src/index');
 const expect = require('chai').expect;
 const sinon = require('sinon');
+const fs = require('fs')
 const AWS = require('aws-sdk');
 const BbPromise = require('bluebird');
 const Serverless = require('serverless')
 const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider')
+
+const localstackEndpointsFile='/app/example/service/localstack_endpoints.json'
 
 describe("LocalstackPlugin", () => {
 
@@ -19,7 +22,7 @@ describe("LocalstackPlugin", () => {
           this.serverless={
             service: {
               cli: {
-                log: () => {}
+                log: (msg) => {console.log(msg)}
               }
             },
             providers: {
@@ -46,7 +49,7 @@ describe("LocalstackPlugin", () => {
           this.serverless={
             service: {
               cli: {
-                log: () => {}
+                log: (msg) => {console.log(msg)}
               },
               custom: {
               },
@@ -93,7 +96,7 @@ describe("LocalstackPlugin", () => {
           this.serverless={
             service: {
               cli: {
-                log: () => {}
+                log: (msg) => {console.log(msg)}
               },
               custom: {
                 localstack: {}
@@ -124,11 +127,11 @@ describe("LocalstackPlugin", () => {
         this.serverless={
           service: {
             cli: {
-              log: () => {}
+              log: (msg) => {console.log(msg)}
             },
             custom: {
               localstack: {
-                endpoint: './example/localstack_endpoints.json',
+                endpoint: localstackEndpointsFile,
               },
             },
           },
@@ -146,11 +149,11 @@ describe("LocalstackPlugin", () => {
       it('should provide hooks', shouldProvideHooks)
 
       it('should set the endpoint', () => {
-        expect(this.instance.endpoint).to.equal('./example/localstack_endpoints.json')
+        expect(this.instance.endpoint).to.equal(localstackEndpointsFile)
       });
 
       it('should copy the endpoints to the AWS provider options', ()=> {
-        endpoints=require('../../example/localstack_endpoints')
+        endpoints=JSON.parse(fs.readFileSync(localstackEndpointsFile))
 
         expect(this.instance.serverless.providers.aws.options.serverless_localstack.endpoints).to.deep.equal(endpoints)
       })
@@ -163,11 +166,11 @@ describe("LocalstackPlugin", () => {
       this.serverless={
         service: {
           cli: {
-            log: () => {}
+            log: (msg) => {console.log(msg)}
           },
           custom: {
             localstack: {
-              endpoint: './example/localstack_endpoints.json',
+              endpoint: localstackEndpointsFile,
             },
           },
         },
@@ -190,11 +193,7 @@ describe("LocalstackPlugin", () => {
         var that=this;
         class FakeService {
           constructor(credentials) {
-            this.credentials = credentials;
-          }
-
-          setEndpoint(endpoint){
-            that.endpoint=endpoint
+            that.credentials = credentials;
           }
 
           foo(){
@@ -209,11 +208,11 @@ describe("LocalstackPlugin", () => {
         const options={}
         this.serverless = new Serverless(options);
         this.serverless.cli = {
-          log: () => {}
+          log: (msg) => {console.log(msg)}
         }
         this.serverless.service.custom = {
           localstack: {
-            endpoint: './example/localstack_endpoints.json',
+            endpoint: localstackEndpointsFile,
           },
         }
 
@@ -232,7 +231,7 @@ describe("LocalstackPlugin", () => {
 
         this.serverless.providers.aws.request('Lambda','foo',{});
 
-        expect(this.endpoint).to.equal('http://localstack:4574')
+        expect(this.credentials.endpoint).to.equal('http://localstack:4574')
         done()
       });
 
@@ -257,7 +256,14 @@ describe("LocalstackPlugin", () => {
     })
 
     it('should allow the endpoint.json to be referenced from the working dir', () => {
-      fail('todo')
+      this.serverless.service.custom = {
+        localstack: {
+          endpoint: 'example/service/localstack_endpoints.json',
+        },
+      }
+      this.instance = new LocalstackPlugin(this.serverless, {})
+      // TODO approval testing
+      expect(this.instance.endpoint).not.to.be.undefined
     });
 
 })

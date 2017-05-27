@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const example_endpoints = require('../../example/localstack_endpoints');
+const example_endpoints = require('../../example/service/localstack_endpoints');
 const expect = require('chai').expect;
 
 describe("example/localstack_endpoints.json", () => {

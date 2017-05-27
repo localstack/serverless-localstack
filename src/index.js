@@ -30,7 +30,7 @@ class LocalstackPlugin {
 
       let endpointJson;
       try{
-        endpointJson=require(this.endpoint.substring(0,this.endpoint.indexOf('.json')))
+        endpointJson=JSON.parse(fs.readFileSync(this.endpoint));
       }catch(err) {
         throw new ReferenceError(`Endpoint: "${this.endpoint}" is invalid: ${err}`)
       }
@@ -41,24 +41,7 @@ class LocalstackPlugin {
     this.providerRequest = awsProvider.request.bind(awsProvider)
     awsProvider.request=this.interceptRequest.bind(awsProvider)
 
-    // this.providerGetCredentials = awsProvider.getCredentials.bind(awsProvider)
-    // awsProvider.getCredentials=this.interceptGetCredentials.bind(this)
   }
-
-  // interceptGetCredentials(){
-  //   credentials = this.providerGetCredentials()
-  //
-  //   if(this.endpoint){
-  //     const endpointJson = this.endpoint
-  //     if(endpointJson[service]){
-  //
-  //       this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
-  //       awsService.setEndpoint(endpointJson[service])
-  //      FIXME - DONT HAVE ACCESS TO THE SERVICE...
-  //     }
-  //   }
-  // }
-
 
   interceptRequest(service, method, params) {
     const that = this;
@@ -94,16 +77,6 @@ class LocalstackPlugin {
 
     return persistentRequest(() => {
       const awsService = new that.sdk[service](credentials);
-
-      // if(this.options.serverless_localstack && this.options.serverless_localstack.endpoints){
-      //   const endpointJson = this.options.serverless_localstack.endpoints
-      //   if(endpointJson[service]){
-      //
-      //     this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
-      //     awsService.setEndpoint(endpointJson[service])
-      //   }
-      // }
-
 
       const req = awsService[method](params);
 

@@ -8,8 +8,6 @@ node_js:
   - "4.4"
 services:
   - docker
-
-before_install:
 script:
   - echo "127.0.0.1  localstack" | sudo tee -a /etc/hosts
   - npm test
