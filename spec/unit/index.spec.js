@@ -1,3 +1,4 @@
+'use strict';
 const LocalstackPlugin = require('../../src/index');
 const expect = require('chai').expect;
 const sinon = require('sinon');
