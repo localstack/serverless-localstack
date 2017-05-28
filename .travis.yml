@@ -1,6 +1,6 @@
 before_install:
   - docker-compose pull
-  - docker-compose run localstack
+  - docker-compose run -d localstack
   - npm install --ignore-scripts
 language: node_js
 node_js:
