@@ -1,92 +1,114 @@
 'use strict';
-const BbPromise = require('bluebird');
+const Promise = require('bluebird');
 const AWS = require('aws-sdk');
-const fs = require('fs')
-
+const fs = require('fs');
+const path = require('path');
 
 class LocalstackPlugin {
   constructor(serverless, options) {
+    this.config = serverless.service.custom && serverless.service.custom.localstack || {};
     this.serverless = serverless;
-    var customConfig = this.serverless.service.custom || {}
-    var pluginConfig= customConfig.localstack || {}
     this.options = options;
-    this.endpoint = pluginConfig.endpoint
+    this.endpoints = this.config.endpoints || {};
+    this.endpointFile = this.config.endpointFile;
     this.commands = {
-      deploy: {
-
-      },
+      deploy: {}
     };
-
     this.hooks = {
     };
 
-    // Intercept Provider requests
-    const awsProvider=this.serverless.providers.aws
+    this.log('Using serverless-localstack-plugin');
 
-    if( this.endpoint && awsProvider.options) {
-      if (!fs.existsSync(this.endpoint)){
-        throw new ReferenceError(`Endpoint: "${this.endpoint}" could not be found.`)
-      }
-
-      let endpointJson;
-      try{
-        endpointJson=JSON.parse(fs.readFileSync(this.endpoint));
-      }catch(err) {
-        throw new ReferenceError(`Endpoint: "${this.endpoint}" is invalid: ${err}`)
-      }
-      awsProvider.options.serverless_localstack= {
-        endpoints: endpointJson
-      }
+    if (this.endpointFile) {
+      this.loadEndpointsFromDisk(this.endpointFile);
     }
-    this.providerRequest = awsProvider.request.bind(awsProvider)
-    awsProvider.request=this.interceptRequest.bind(awsProvider)
 
+    // Intercept Provider requests
+    this.awsProvider = this.serverless.providers.aws;
+    this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
+    this.awsProvider.request = this.interceptRequest.bind(this);
+  }
+
+  loadEndpointsFromDisk(endpointFile) {
+    let endpointJson;
+
+    this.debug('Loading endpointJson from ' + endpointFile);
+
+    try {
+
+      endpointJson = JSON.parse( fs.readFileSync(endpointFile) );
+    } catch(err) {
+      throw new ReferenceError(`Endpoint: "${this.endpointFile}" is invalid: ${err}`)
+    }
+
+    for (const key of Object.keys(endpointJson)) {
+      this.debug('Intercepting service ' + key);
+      this.endpoints[key] = endpointJson[key];
+    }
+  }
+
+  log(msg) {
+    this.serverless.cli.log.call(this.serverless.cli, msg);
+  }
+
+  debug(msg) {
+    if (this.config.debug) {
+      this.log(msg);
+    }
   }
 
   interceptRequest(service, method, params) {
-    const that = this;
-    const credentials = that.getCredentials();
+    const credentials = (function() {
+      return this.getCredentials();
+    }).bind(this.awsProvider);
 
+    const endpoints = this.endpoints;
 
-    this.serverless.cli.log(`Using serverless-localstack plugin`)
-
-    if(this.options.serverless_localstack && this.options.serverless_localstack.endpoints){
-      const endpointJson = this.options.serverless_localstack.endpoints
-      if(endpointJson[service]){
-
-        this.serverless.cli.log(`Using custom endpoint for ${service}: ${endpointJson[service]}`)
-        credentials.endpoint = endpointJson[service]
-      }
+    if (!endpoints || !endpoints[service]) {
+      this.debug(`Not intercepting ${service}`);
+      return this.awsProviderRequest(service, method, params);
     }
 
-    const persistentRequest = (f) => new BbPromise((resolve, reject) => {
-      const doCall = () => {
-        f()
-          .then(resolve)
-          .catch((e) => {
-            if (e.statusCode === 429) {
-              that.serverless.cli.log("'Too many requests' received, sleeping 5 seconds");
-              setTimeout(doCall, 5000);
-            } else {
-              reject(e);
-            }
-          });
-      };
-      return doCall();
-    });
+    const endpoint = endpoints[service];
 
-    return persistentRequest(() => {
-      const awsService = new that.sdk[service](credentials);
+    // // Template validation is not supported in LocalStack
+    if (method == "validateTemplate") {
+      return Promise.resolve("");
+    }
 
+    if (endpoints['S3'] && params.TemplateURL) {
+      params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, endpoints['S3']);
+    }
+
+    this.debug(`Using custom endpoint for ${service}: ${endpoint}`);
+    credentials.endpoint = endpoint;
+
+    return new Promise((resolve, reject) => {
+      const awsService = new this.awsProvider.sdk[service](credentials);
       const req = awsService[method](params);
+      let retries = 0;
 
-      // TODO: Add listeners, put Debug statments here...
-      // req.on('send', function (r) {console.log(r)});
+      // // TODO: Add listeners, put Debug statments here...
+      if (this.config.verbose) {
+        req.on('send', (req) => {
+          const request = req.request.httpRequest;
+          this.debug('Send: ' + request.method + ' ' + request.path + "\n" + request.body);
+        });
+        req.on('success', (res) => {
+          this.debug('Receive: ' + res.httpResponse.body.toString());
+        });
+      }
 
-      return new BbPromise((resolve, reject) => {
+      const send = () => {
         req.send((errParam, data) => {
           const err = errParam;
           if (err) {
+            if (err.statusCode === 429 && retries < 3) {
+              this.debug("'Too many requests' received, sleeping 5 seconds");
+              retries ++;
+              return setTimeout(send().bind(this), 5000);
+            }
+
             if (err.message === 'Missing credentials in config') {
               const errorMessage = [
                 'AWS provider credentials not found.',
@@ -95,16 +117,17 @@ class LocalstackPlugin {
               ].join('');
               err.message = errorMessage;
             }
+
             reject(new this.serverless.classes.Error(err.message, err.statusCode));
           } else {
             resolve(data);
           }
         });
-      });
+      };
+
+      send();
     });
-
   }
-
 }
 
 module.exports = LocalstackPlugin;

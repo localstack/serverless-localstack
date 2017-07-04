@@ -1,6 +1,6 @@
 {
-  "name": "serverless-plugin-localstack",
-  "version": "0.0.1",
+  "name": "serverless-localstack",
+  "version": "0.0.2",
   "description": "",
   "main": "src/index.js",
   "scripts": {
@@ -16,6 +16,9 @@
     "url": "git+ssh://git@github.com/temyers/serverless-localstack"
   },
   "author": "TODO",
+  "contributors": [
+    "Justin McCormick <me@justinmccormick.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "TODO"
