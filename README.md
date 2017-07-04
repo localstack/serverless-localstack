@@ -3,6 +3,8 @@
 
 This plugin allows any requests to AWS to be redirected to a running Localstack instance.
 
+WARNING: This plugin is very much WIP
+
 Pre-requisites:
 * Localstack
 
