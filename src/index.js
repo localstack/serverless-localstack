@@ -8,13 +8,23 @@ class LocalstackPlugin {
   constructor(serverless, options) {
     this.config = serverless.service.custom && serverless.service.custom.localstack || {};
     this.serverless = serverless;
-    this.options = options;
     this.endpoints = this.config.endpoints || {};
     this.endpointFile = this.config.endpointFile;
     this.commands = {
       deploy: {}
     };
     this.hooks = {
+    };
+    this.AWS_SERVICES = {
+      'apigateway': 4567,
+      'cloudformation': 4581,
+      'cloudwatch': 4582,
+      'lambda': 4574,
+      'dynamodb': 4567,
+      's3': 4572,
+      'ses': 4579,
+      'sns': 4575,
+      'sqs': 4576
     };
 
     this.log('Using serverless-localstack-plugin');
@@ -24,9 +34,40 @@ class LocalstackPlugin {
     }
 
     // Intercept Provider requests
-    this.awsProvider = this.serverless.providers.aws;
+    this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
     this.awsProvider.request = this.interceptRequest.bind(this);
+
+    this.reconfigureAWS();
+  }
+
+  reconfigureAWS() {
+    const host = this.config.host;
+    let configChanges = {};
+
+    // If a host has been configured, override each service
+    if (host) {
+      for (const service of Object.keys(this.AWS_SERVICES)) {
+        const port = this.AWS_SERVICES[service];
+        const url = `${host}:${port}`;
+
+        this.debug(`Reconfiguring service ${service} to use ${url}`);
+        configChanges[service.toLowerCase()] = { endpoint: url };
+      }
+    }
+
+    // Override specific endpoints if specified
+    if (this.endpoints) {
+      for (const service of Object.keys(this.endpoints)) {
+        const url = this.endpoints[service];
+
+        this.debug(`Reconfiguring service ${service} to use ${url}`);
+        configChanges[service.toLowerCase()] = { endpoint: url };
+      }
+    }
+
+    this.awsProvider.sdk.config.update(configChanges);
+
   }
 
   loadEndpointsFromDisk(endpointFile) {
@@ -35,7 +76,6 @@ class LocalstackPlugin {
     this.debug('Loading endpointJson from ' + endpointFile);
 
     try {
-
       endpointJson = JSON.parse( fs.readFileSync(endpointFile) );
     } catch(err) {
       throw new ReferenceError(`Endpoint: "${this.endpointFile}" is invalid: ${err}`)
@@ -58,75 +98,23 @@ class LocalstackPlugin {
   }
 
   interceptRequest(service, method, params) {
-    const credentials = (function() {
-      return this.getCredentials();
-    }).bind(this.awsProvider);
-
-    const endpoints = this.endpoints;
-
-    if (!endpoints || !endpoints[service]) {
-      this.debug(`Not intercepting ${service}`);
-      return this.awsProviderRequest(service, method, params);
-    }
-
-    const endpoint = endpoints[service];
-
     // // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
+      this.log('Skipping template validation: Unsupported in Localstack');
       return Promise.resolve("");
     }
 
-    if (endpoints['S3'] && params.TemplateURL) {
-      params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, endpoints['S3']);
+    if (AWS.config[service]) {
+      this.debug(`Using custom endpoint for ${service}: ${endpoint}`);
+
+      if (AWS.config['s3'] && params.TemplateURL) {
+        this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
+        params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, AWS.config['s3']);
+      }
     }
 
-    this.debug(`Using custom endpoint for ${service}: ${endpoint}`);
-    credentials.endpoint = endpoint;
+    return this.awsProviderRequest(service, method, params);
 
-    return new Promise((resolve, reject) => {
-      const awsService = new this.awsProvider.sdk[service](credentials);
-      const req = awsService[method](params);
-      let retries = 0;
-
-      // // TODO: Add listeners, put Debug statments here...
-      if (this.config.verbose) {
-        req.on('send', (req) => {
-          const request = req.request.httpRequest;
-          this.debug('Send: ' + request.method + ' ' + request.path + "\n" + request.body);
-        });
-        req.on('success', (res) => {
-          this.debug('Receive: ' + res.httpResponse.body.toString());
-        });
-      }
-
-      const send = () => {
-        req.send((errParam, data) => {
-          const err = errParam;
-          if (err) {
-            if (err.statusCode === 429 && retries < 3) {
-              this.debug("'Too many requests' received, sleeping 5 seconds");
-              retries ++;
-              return setTimeout(send().bind(this), 5000);
-            }
-
-            if (err.message === 'Missing credentials in config') {
-              const errorMessage = [
-                'AWS provider credentials not found.',
-                ' You can find more info on how to set up provider',
-                ' credentials in our docs here: https://git.io/vXsdd',
-              ].join('');
-              err.message = errorMessage;
-            }
-
-            reject(new this.serverless.classes.Error(err.message, err.statusCode));
-          } else {
-            resolve(data);
-          }
-        });
-      };
-
-      send();
-    });
   }
 }
 
