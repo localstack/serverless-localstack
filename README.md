@@ -34,9 +34,13 @@ ln -s /absolute/path/to/plugin .serverless_plugins/serverless-plugin-localstack
 
 ## Configuring
 
-There are two ways to configure the plugin, via a JSON file or via serverless.yml.
+There are two ways to configure the plugin, via a JSON file or via serverless.yml. There are two supported methods for
+configuring the endpoints, globally via the "host" property, or individually. These properties may be mixed, allowing for
+global override support while also override specific endpoints.
 
-#### Configuring endpoints via serverless.yml
+A "host" or individual endpoints must be configured or this plugin will be deactivated.
+
+#### Configuring endpoints via serverless.yml 
 
 ```
 service: myService
@@ -46,6 +50,7 @@ plugins:
 
   custom:
     localstack:
+      host: http://localhost
       endpoints:
         S3: http://localhost:4572
         DynamoDB: http://localhost:4570
@@ -66,7 +71,86 @@ service: myService
 plugins:
   - serverless-plugin-localstack
 
-  custom:
-    localstack:
-      endpointFile: path/to/file.json
+custom:
+  localstack:
+    endpointFile: path/to/file.json
+```
+
+## Localstack
+
+For full documentation, see https://bitbucket.org/atlassian/localstack
+
+#### Installing via PIP
+
+The easiest way to get started with Localstack is to install it via Python's pip.
+
+```
+pip install localstack
+```
+
+#### Installing via Source
+
+Clone the repository
+```
+git clone git@bitbucket.org:atlassian/localstack.git
+```
+
+### Running Localstack
+
+There are multiple ways to run Localstack.
+
+#### Starting Localstack via Docker
+  
+If Localstack is installed via pip
+
+```
+localstack start --docker
+```
+
+If Localstack is installed via source
+
+```
+make docker-run
+```
+
+#### Starting Localstack without Docker
+
+If Localstack is installed via pip
+
+```
+localstack start
+```
+
+If Localstack is installed via source
+
+```
+make infra
+```
+
+## Contributing
+
+Setting up a development environment is easy using Serverless' plugin framework.
+
+##### Clone the Repo
+
+```
+git clone https://github.com/temyers/serverless-localstack
+```
+
+##### Setup your project
+
+```
+cd myproject
+mkdir .serverless_plugins
+ln -s /absolute/path/to/serverless-localstack .serverless_plugins/serverless-localstack
+```
+
+### Optional Debug Flag
+
+An optional debug flag is supported via serverless.yml that will enable additional debug logs.
+
+```
+custom:
+  localstack:
+    debug: true
 ```
