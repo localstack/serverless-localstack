@@ -48,19 +48,19 @@ service: myService
 plugins:
   - serverless-plugin-localstack
 
-  custom:
-    localstack:
-      host: http://localhost
-      endpoints:
-        S3: http://localhost:4572
-        DynamoDB: http://localhost:4570
-        CloudFormation: http://localhost:4581
-        Elasticsearch: http://localhost:4571
-        ES: http://localhost:4578
-        SNS: http://localhost:4575
-        SQS: http://localhost:4576
-        Lambda: http://localhost:4574
-        Kinesis: http://localhost:4568
+custom:
+  localstack:
+    host: http://localhost
+    endpoints:
+      S3: http://localhost:4572
+      DynamoDB: http://localhost:4570
+      CloudFormation: http://localhost:4581
+      Elasticsearch: http://localhost:4571
+      ES: http://localhost:4578
+      SNS: http://localhost:4575
+      SQS: http://localhost:4576
+      Lambda: http://localhost:4574
+      Kinesis: http://localhost:4568
 ```
 
 #### Configuring endpoints via JSON
