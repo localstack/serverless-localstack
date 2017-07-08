@@ -9,6 +9,7 @@ plugins:
 
 custom:
   localstack:
+    host: http://localhost
     endpoint: localstack_endpoints.json
 
 functions:
