@@ -7,6 +7,7 @@ const path = require('path');
 class LocalstackPlugin {
   constructor(serverless, options) {
     this.config = serverless.service.custom && serverless.service.custom.localstack || {};
+    Object.assign(this.config, options);
     this.serverless = serverless;
     this.endpoints = this.config.endpoints || {};
     this.endpointFile = this.config.endpointFile;
@@ -104,12 +105,12 @@ class LocalstackPlugin {
       return Promise.resolve("");
     }
 
-    if (AWS.config[service]) {
-      this.debug(`Using custom endpoint for ${service}: ${endpoint}`);
+    if (AWS.config[service.toLowerCase()]) {
+      this.debug(`Using custom endpoint for ${service}: ${AWS.config['s3'].endpoint}`);
 
       if (AWS.config['s3'] && params.TemplateURL) {
         this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
-        params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, AWS.config['s3']);
+        params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, AWS.config['s3'].endpoint);
       }
     }
 

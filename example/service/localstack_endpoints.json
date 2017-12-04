@@ -1,17 +1,17 @@
 {
     "APIGateway": "http://localhost:4567",
-    "CloudFormation": "http://localstack:4581",
+    "CloudFormation": "http://localhost:4581",
     "CloudWatch":"http://localhost:4582",
-    "DynamoDB": "http://localstack:4569",
+    "DynamoDB": "http://localhost:4569",
     "DynamoDBStreams": "http://localhost:4570",
     "ES": "http://localhost:4571",
     "Firehose": "http://localhost:4573",
-    "Kinesis": "http://localstack:4568",
-    "Lambda": "http://localstack:4574",
-    "Redshift": "http://localstack:4577",
-    "Route53": "http://localstack:4580",
-    "S3": "http://localstack:4572",
-    "SES": "http://localstack:4579",
-    "SNS": "http://localstack:4575",
-    "SQS": "http://localstack:4576"
+    "Kinesis": "http://localhost:4568",
+    "Lambda": "http://localhost:4574",
+    "Redshift": "http://localhost:4577",
+    "Route53": "http://localhost:4580",
+    "S3": "http://localhost:4572",
+    "SES": "http://localhost:4579",
+    "SNS": "http://localhost:4575",
+    "SQS": "http://localhost:4576"
 }

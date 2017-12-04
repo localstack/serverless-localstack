@@ -1,5 +1,6 @@
 'use strict';
 const LocalstackPlugin = require('../../src/index');
+const chai = require('chai');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const fs = require('fs')
@@ -10,86 +11,68 @@ const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider')
 const path = require('path');
 const localstackEndpointsFile = path.normalize( path.join(__dirname, '../../example/service/localstack_endpoints.json') );
 
+chai.use(require('chai-string'));
+
+// Enable for more verbose logging
 const debug = false;
 
 describe("LocalstackPlugin", () => {
 
   let serverless;
+  let awsProvider;
+  let awsConfig;
   let instance;
+  let sandbox;
+  let config = {
+    host: 'http://localhost',
+    debug: debug
+  };
 
   beforeEach(() => {
-    serverless = {
-      cli: {
-        log: (msg) => {
-          if (debug) {
-            console.log(msg)
-          }
-        }
-      },
-      service: {
-        custom: {
-          localstack: {
-            debug: debug,
-            endpoints: {
-              'S3': 'http://localhost:4572'
-            }
-          }
-        }
-      },
-      providers: {
-        aws: {
-          request: () => {},
-          setProvider: () => {}
-        }
+    sandbox = sinon.sandbox.create();
+    serverless = new Serverless();
+    awsProvider = new AwsProvider(serverless, {});
+    awsConfig = new AWS.Config();
+    AWS.config = awsConfig;
+    awsProvider.sdk = AWS;
+    awsProvider.config = awsConfig;
+    serverless.init();
+    serverless.setProvider('aws', awsProvider);
+    serverless.cli.log = () => {
+      if (debug) {
+        console.log.apply(this, arguments);
       }
-    };
+    }
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('#constructor()', () => {
-
-    describe('Config missing', () => {
+    describe('with empty configuration', () => {
 
         beforeEach(() => {
-          serverless.service.custom = null;
+          serverless.service.custom = {};
           instance = new LocalstackPlugin(serverless, {});
         });
 
-        it('should not set the endpoint', () => {
+        it('should not set the endpoints', () => {
           expect(instance.endpoints).to.be.empty;
         });
 
-    });
-    describe('Config empty', () => {
-
-        it('should not set the endpoint', ()=> {
-          serverless.service.custom.localstack = {};
-          instance = new LocalstackPlugin(serverless, {})
-
-          expect(instance.endpoints).to.be.empty;
-          expect(instance.hooks).to.be.empty;
+        it('should not set the endpoint file', () => {
+          expect(instance.endpointFile).to.be.empty;
         });
-
-        it('should fail if the endpoint file does not exist', () => {
-          serverless.service.custom.localstack = {
-            endpointFile: 'missing.json'
-          }
-          let plugin = () => { new LocalstackPlugin(serverless, {}) }
-          expect(plugin).to.throw('Endpoint: "missing.json" is invalid:')
-        });
-
-        it('should fail if the endpoint file is not json', () => {
-          serverless.service.custom.localstack = {
-            endpointFile: 'README.md'
-          }
-          let plugin = () => { new LocalstackPlugin(serverless, {}) }
-          expect(plugin).to.throw(/Endpoint: "README.md" is invalid:/)
-
-        })
     });
 
-    describe('Config provided', () => {
+    describe('with config file provided', () => {
       beforeEach(() => {
-        serverless.service.custom.localstack.endpointFile = localstackEndpointsFile;
+        serverless.service.custom = {
+          localstack: {
+            endpointFile: localstackEndpointsFile
+          }
+        };
         instance = new LocalstackPlugin(serverless, {})
       });
 
@@ -101,77 +84,76 @@ describe("LocalstackPlugin", () => {
         let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
 
         expect(instance.endpoints).to.deep.equal(endpoints)
-      })
+      });
+
+      it('should fail if the endpoint file does not exist', () => {
+        serverless.service.custom.localstack = {
+          endpointFile: 'missing.json'
+        }
+
+        let plugin = () => { new LocalstackPlugin(serverless, {}) }
+
+        expect(plugin).to.throw('Endpoint: "missing.json" is invalid:')
+      });
+
+      it('should fail if the endpoint file is not json', () => {
+        serverless.service.custom.localstack = {
+          endpointFile: 'README.md'
+        }
+        let plugin = () => { new LocalstackPlugin(serverless, {}) }
+        expect(plugin).to.throw(/Endpoint: "README.md" is invalid:/)
+      });
 
     });
   });
 
   describe('#request() bound on AWS provider', ()=>{
+    let service;
+    let credentials;
 
     beforeEach(()=> {
-      var that=this;
       class FakeService {
-        constructor(credentials) {
-          that.credentials = credentials;
+        constructor(_credentials) {
+          credentials = _credentials;
         }
 
         foo() {
           return this;
         }
 
-        send(){
+        send() {
           return this;
         }
       }
-      this.FakeService = FakeService
-      const options = {}
-      serverless = new Serverless(options);
-      serverless.cli = {
-        log: (msg) => {
-          if (debug) {
-            console.log(msg)
-          }
-        }
-      }
 
+      serverless.providers.aws.sdk.S3 = FakeService;
       serverless.service.custom = {
         localstack: {
           endpointFile: localstackEndpointsFile,
         }
       }
-
-      this.serverlessAwsProvider = new AwsProvider(serverless, {})
-      serverless.providers.aws=this.serverlessAwsProvider
-
     });
 
-    it('should set the endpoint on the AWS provider when a provider request is invoked and the endpoint has been defined',
-    (done)=> {
-      this.serverlessAwsProvider.sdk = {
-        Lambda: this.FakeService,
-      };
-
+    it('should overwrite the S3 hostname', () => {
+      let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
+      let request = sinon.stub(awsProvider, 'request');
       instance = new LocalstackPlugin(serverless, {})
-
-      serverless.providers.aws.request('Lambda','foo',{});
-
-      expect(this.credentials.endpoint).to.equal('http://localstack:4574')
-      done()
-    });
-
-    it('should not set the endpoint if the required endpoint service is not defined', (done) => {
-      this.serverlessAwsProvider.sdk = {
-        Lambda: this.FakeService,
-        bobbins: this.FakeService,
-      };
-
-      instance = new LocalstackPlugin(serverless, {})
-
-      serverless.providers.aws.request('bobbins','foo',{}).then((result) => {
-        expect(result).to.be.true;
+      awsProvider.request('S3','foo',{
+        TemplateURL: pathToTemplate
       });
 
-      done()
+      expect(request.called).to.be.true;
+      let templateUrl = request.firstCall.args[2].TemplateURL;
+      expect(templateUrl).to.startsWith(`${config.host}`);
+    });
+
+    it('should not send validateTemplate calls to localstack', () => {
+      let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
+      let request = sinon.stub(awsProvider, 'request');
+      instance = new LocalstackPlugin(serverless, {})
+      awsProvider.request('S3','validateTemplate',{});
+
+      expect(request.called).to.be.false;
     });
 
   });
