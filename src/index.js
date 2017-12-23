@@ -16,7 +16,7 @@ class LocalstackPlugin {
 
     //If the target stage is listed in config.stages use the serverless-localstack-plugin
     //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
-    if(this.config.stages === undefined || this.config.stages.includes(this.config.stage)){
+    if(this.config.stages === undefined || this.config.stages.indexOf(this.config.stage) > -1){
       this.log('Using serverless-localstack-plugin');
       this.endpoints = this.config.endpoints || {};
       this.endpointFile = this.config.endpointFile;
@@ -36,7 +36,7 @@ class LocalstackPlugin {
         'sns': 4575,
         'sqs': 4576
       };
-      
+
       if (this.endpointFile) {
         this.loadEndpointsFromDisk(this.endpointFile);
       }
