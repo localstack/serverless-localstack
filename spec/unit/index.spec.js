@@ -86,6 +86,26 @@ describe("LocalstackPlugin", () => {
         expect(instance.endpoints).to.deep.equal(endpoints)
       });
 
+      it('should not set the endpoints if the stages config option does not include the deployment stage', () => {
+          serverless.service.custom.localstack.stages = ['production'];
+
+          let plugin = new LocalstackPlugin(serverless, {})
+
+          expect(plugin.endpoints).to.be.empty;
+      });
+
+      it('should set the endpoints if the stages config option includes the deployment stage', () => {
+        serverless.service.custom.localstack.stages = ['production', 'staging'];
+
+        let plugin = new LocalstackPlugin(serverless, {'stage':'production'})
+
+        let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
+
+        expect(plugin.config.stages).to.deep.equal(['production','staging']);
+        expect(plugin.config.stage).to.equal('production');
+        expect(plugin.endpoints).to.deep.equal(endpoints)
+      });
+
       it('should fail if the endpoint file does not exist', () => {
         serverless.service.custom.localstack = {
           endpointFile: 'missing.json'

@@ -8,38 +8,48 @@ class LocalstackPlugin {
   constructor(serverless, options) {
     this.config = serverless.service.custom && serverless.service.custom.localstack || {};
     Object.assign(this.config, options);
+
+    //Get the target deployment stage
+    this.config.stage =  options.stage || serverless.service.provider.stage
+
     this.serverless = serverless;
-    this.endpoints = this.config.endpoints || {};
-    this.endpointFile = this.config.endpointFile;
-    this.commands = {
-      deploy: {}
-    };
-    this.hooks = {
-    };
-    this.AWS_SERVICES = {
-      'apigateway': 4567,
-      'cloudformation': 4581,
-      'cloudwatch': 4582,
-      'lambda': 4574,
-      'dynamodb': 4567,
-      's3': 4572,
-      'ses': 4579,
-      'sns': 4575,
-      'sqs': 4576
-    };
 
-    this.log('Using serverless-localstack-plugin');
+    //If the target stage is listed in config.stages use the serverless-localstack-plugin
+    //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
+    if(this.config.stages === undefined || this.config.stages.includes(this.config.stage)){
+      this.log('Using serverless-localstack-plugin');
+      this.endpoints = this.config.endpoints || {};
+      this.endpointFile = this.config.endpointFile;
+      this.commands = {
+        deploy: {}
+      };
+      this.hooks = {
+      };
+      this.AWS_SERVICES = {
+        'apigateway': 4567,
+        'cloudformation': 4581,
+        'cloudwatch': 4582,
+        'lambda': 4574,
+        'dynamodb': 4567,
+        's3': 4572,
+        'ses': 4579,
+        'sns': 4575,
+        'sqs': 4576
+      };
+      
+      if (this.endpointFile) {
+        this.loadEndpointsFromDisk(this.endpointFile);
+      }
 
-    if (this.endpointFile) {
-      this.loadEndpointsFromDisk(this.endpointFile);
+      // Intercept Provider requests
+      this.awsProvider = this.serverless.getProvider('aws');
+      this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
+      this.awsProvider.request = this.interceptRequest.bind(this);
+
+      this.reconfigureAWS();
+    } else {
+      this.log('Skipping serverless-localstack-plugin')
     }
-
-    // Intercept Provider requests
-    this.awsProvider = this.serverless.getProvider('aws');
-    this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
-    this.awsProvider.request = this.interceptRequest.bind(this);
-
-    this.reconfigureAWS();
   }
 
   reconfigureAWS() {
