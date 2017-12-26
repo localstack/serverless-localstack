@@ -3,6 +3,7 @@ const Promise = require('bluebird');
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -10,75 +11,93 @@ class LocalstackPlugin {
     Object.assign(this.config, options);
 
     //Get the target deployment stage
-    this.config.stage =  options.stage || serverless.service.provider.stage
+    this.config.stage = ""
+    this.config.options_stage = options.stage || undefined
 
     this.serverless = serverless;
 
     //If the target stage is listed in config.stages use the serverless-localstack-plugin
     //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
-    if(this.config.stages === undefined || this.config.stages.indexOf(this.config.stage) > -1){
-      this.log('Using serverless-localstack-plugin');
-      this.endpoints = this.config.endpoints || {};
-      this.endpointFile = this.config.endpointFile;
-      this.commands = {
-        deploy: {}
-      };
-      this.hooks = {
-      };
-      this.AWS_SERVICES = {
-        'apigateway': 4567,
-        'cloudformation': 4581,
-        'cloudwatch': 4582,
-        'lambda': 4574,
-        'dynamodb': 4567,
-        's3': 4572,
-        'ses': 4579,
-        'sns': 4575,
-        'sqs': 4576
-      };
+    this.endpoints = this.config.endpoints || {};
+    this.endpointFile = this.config.endpointFile;
+    this.commands = {
+      deploy: {}
+    };
+    this.hooks = {
+      'before:deploy:deploy': this.beforeDeploy.bind(this)
+    };
+    this.AWS_SERVICES = {
+      'apigateway': 4567,
+      'cloudformation': 4581,
+      'cloudwatch': 4582,
+      'lambda': 4574,
+      'dynamodb': 4567,
+      's3': 4572,
+      'ses': 4579,
+      'sns': 4575,
+      'sqs': 4576
+    };
 
-      if (this.endpointFile) {
-        this.loadEndpointsFromDisk(this.endpointFile);
-      }
-
-      // Intercept Provider requests
-      this.awsProvider = this.serverless.getProvider('aws');
-      this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
-      this.awsProvider.request = this.interceptRequest.bind(this);
-
-      this.reconfigureAWS();
-    } else {
-      this.log('Skipping serverless-localstack-plugin')
+    if (this.endpointFile) {
+      this.loadEndpointsFromDisk(this.endpointFile);
     }
+
+    // Intercept Provider requests
+    this.awsProvider = this.serverless.getProvider('aws');
+    this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
+    this.awsProvider.request = this.interceptRequest.bind(this);
+    //this.reconfigureAWS();
+  }
+
+  beforeDeploy(){
+    this.getStageVariable();
+    this.reconfigureAWS();
+  }
+
+  getStageVariable(){
+    this.debug("config.options_stage: " + this.config.options_stage);
+    this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);
+    this.debug("serverless.service.provider.stage: " + this.serverless.service.provider.stage);
+    this.config.stage = this.config.options_stage || this.serverless.service.custom.stage || this.serverless.service.provider.stage
   }
 
   reconfigureAWS() {
-    const host = this.config.host;
-    let configChanges = {};
+    if(this.config.stages === undefined || this.config.stages.indexOf(this.config.stage) > -1){
+      this.log('Using serverless-localstack-plugin');
+      const host = this.config.host;
+      let configChanges = {};
 
-    // If a host has been configured, override each service
-    if (host) {
-      for (const service of Object.keys(this.AWS_SERVICES)) {
-        const port = this.AWS_SERVICES[service];
-        const url = `${host}:${port}`;
+      // If a host has been configured, override each service
+      if (host) {
+        for (const service of Object.keys(this.AWS_SERVICES)) {
+          const port = this.AWS_SERVICES[service];
+          const url = `${host}:${port}`;
 
-        this.debug(`Reconfiguring service ${service} to use ${url}`);
-        configChanges[service.toLowerCase()] = { endpoint: url };
+          this.debug(`Reconfiguring service ${service} to use ${url}`);
+          configChanges[service.toLowerCase()] = { endpoint: url };
+        }
       }
-    }
 
-    // Override specific endpoints if specified
-    if (this.endpoints) {
-      for (const service of Object.keys(this.endpoints)) {
-        const url = this.endpoints[service];
+      // Override specific endpoints if specified
+      if (this.endpoints) {
+        for (const service of Object.keys(this.endpoints)) {
+          const url = this.endpoints[service];
 
-        this.debug(`Reconfiguring service ${service} to use ${url}`);
-        configChanges[service.toLowerCase()] = { endpoint: url };
+          this.debug(`Reconfiguring service ${service} to use ${url}`);
+          configChanges[service.toLowerCase()] = { endpoint: url };
+        }
       }
+
+      this.awsProvider.sdk.config.update(configChanges);
     }
-
-    this.awsProvider.sdk.config.update(configChanges);
-
+    else {
+      this.endpoints = {}
+      this.log("Skipping serverless-localstack-plugin:\ncustom.localstack.stages: " +
+        JSON.stringify(this.config.stages) +
+        "\nstage: " +
+        this.config.stage
+      )
+    }
   }
 
   loadEndpointsFromDisk(endpointFile) {
