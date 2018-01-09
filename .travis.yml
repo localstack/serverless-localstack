@@ -11,4 +11,6 @@ before_install:
   - echo "127.0.0.1 localstack" | sudo tee -a /etc/hosts
 script:
   - npm run test
+  # setup links for integration testing
+  - npm link
   - npm run integ
