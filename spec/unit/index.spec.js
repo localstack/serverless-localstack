@@ -49,6 +49,11 @@ describe("LocalstackPlugin", () => {
     sandbox.restore();
   });
 
+  let simulateBeforeDeployHooks = function(instance){
+    instance.getStageVariable()
+    instance.reconfigureAWS()
+  }
+
   describe('#constructor()', () => {
     describe('with empty configuration', () => {
 
@@ -74,6 +79,7 @@ describe("LocalstackPlugin", () => {
           }
         };
         instance = new LocalstackPlugin(serverless, {})
+        simulateBeforeDeployHooks(instance);
       });
 
       it('should set the endpoint file', () => {
@@ -84,6 +90,26 @@ describe("LocalstackPlugin", () => {
         let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
 
         expect(instance.endpoints).to.deep.equal(endpoints)
+      });
+
+      it('should not set the endpoints if the stages config option does not include the deployment stage', () => {
+          serverless.service.custom.localstack.stages = ['production'];
+
+          let plugin = new LocalstackPlugin(serverless, {});
+          simulateBeforeDeployHooks(plugin);
+          expect(plugin.endpoints).to.be.empty;
+      });
+
+      it('should set the endpoints if the stages config option includes the deployment stage', () => {
+        serverless.service.custom.localstack.stages = ['production', 'staging'];
+
+        let plugin = new LocalstackPlugin(serverless, {'stage':'production'})
+        simulateBeforeDeployHooks(plugin);
+        let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
+
+        expect(plugin.config.stages).to.deep.equal(['production','staging']);
+        expect(plugin.config.stage).to.equal('production');
+        expect(plugin.endpoints).to.deep.equal(endpoints)
       });
 
       it('should fail if the endpoint file does not exist', () => {
@@ -138,10 +164,11 @@ describe("LocalstackPlugin", () => {
       let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
       let request = sinon.stub(awsProvider, 'request');
       instance = new LocalstackPlugin(serverless, {})
+      simulateBeforeDeployHooks(instance);
+
       awsProvider.request('S3','foo',{
         TemplateURL: pathToTemplate
       });
-
       expect(request.called).to.be.true;
       let templateUrl = request.firstCall.args[2].TemplateURL;
       expect(templateUrl).to.startsWith(`${config.host}`);

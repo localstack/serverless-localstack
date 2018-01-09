@@ -40,7 +40,7 @@ global override support while also override specific endpoints.
 
 A "host" or individual endpoints must be configured or this plugin will be deactivated.
 
-#### Configuring endpoints via serverless.yml 
+#### Configuring endpoints via serverless.yml
 
 ```
 service: myService
@@ -76,6 +76,24 @@ custom:
     endpointFile: path/to/file.json
 ```
 
+#### Only enable serverless-plugin-localstack for the listed stages
+* ```serverless deploy --stage local``` would deploy to localstack.
+* ```serverless deploy --stage production``` would deploy to aws.
+
+```
+service: myService
+
+plugins:
+  - serverless-plugin-localstack
+
+custom:
+  localstack:
+    stages:
+      - local
+      - dev
+    endpointFile: path/to/file.json
+```
+
 ## Localstack
 
 For full documentation, see https://bitbucket.org/atlassian/localstack
@@ -100,7 +118,7 @@ git clone git@bitbucket.org:atlassian/localstack.git
 There are multiple ways to run Localstack.
 
 #### Starting Localstack via Docker
-  
+
 If Localstack is installed via pip
 
 ```
