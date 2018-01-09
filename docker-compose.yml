@@ -1,0 +1,33 @@
+version: '2'
+services:
+  dev-env:
+    build:
+      context: .
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ~/.aws/:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_PROFILE
+      - AWS_SESSION_TOKEN
+      - AWS_SECURITY_TOKEN
+    entrypoint:
+      - /bin/bash
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4567-4582:4567-4582"
+      - "8080:8080"
+    environment:
+      # Only start a subset of services required for testing.
+      - SERVICES=s3,sns,sqs,apigateway,lambda,dynamodb,dynamodbstreams,cloudformation
+      # - DEBUG=${DEBUG- }
+      # - DATA_DIR=${DATA_DIR- }
+      # - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR- }
+      # - KINESIS_ERROR_PROBABILITY=${KINESIS_ERROR_PROBABILITY- }
+      # - DOCKER_HOST=unix:///var/run/docker.sock
+    # volumes:
+    #   - "${TMP_DIR:-/tmp/localstack}:${TMP_DIR:-/tmp/localstack}"
+    #   - "/var/run/docker.sock:/var/run/docker.sock"
