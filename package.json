@@ -1,7 +1,7 @@
 {
   "name": "serverless-localstack",
-  "version": "0.0.2",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Connect Serverless to Localstack!",
   "main": "src/index.js",
   "scripts": {
     "lint": "eslint .",
@@ -16,15 +16,17 @@
     "type": "git",
     "url": "git+ssh://git@github.com/temyers/serverless-localstack"
   },
-  "author": "TODO",
+  "author": "temyers",
   "contributors": [
-    "Justin McCormick <me@justinmccormick.com>"
+    "Justin McCormick <me@justinmccormick.com>",
+    "djKooks",
+    "yohei1126"
   ],
   "license": "MIT",
   "bugs": {
-    "url": "TODO"
+    "url": "https://github.com/temyers/serverless-localstack/issues"
   },
-  "homepage": "TODO",
+  "homepage": "https://github.com/temyers/serverless-localstack",
   "dependencies": {
     "aws-sdk": "^2.7.13",
     "bluebird": "^3.4.6"
