@@ -5,6 +5,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const serverlessExec = path.join(__dirname, '../../node_modules/.bin/serverless');
 const packageJson = require('../../package.json')
+const rimraf = require('rimraf')
 
 const debug = false;
 
@@ -19,7 +20,7 @@ const defaultConfig = {
   ],
   custom: {
     localstack: {
-      host: 'http://localhost',
+      host: 'http://localstack',
       debug: debug,
     }
   },
@@ -37,7 +38,7 @@ const installPlugin = (dir) => {
 
   fs.mkdirsSync(pluginsDir);
 
-  execSync(`ln -s ${rootPluginDir} ${myPluginDir}`);
+  execSync(`npm link ${packageJson.name}`, {cwd: dir})
 }
 
 const execServerless = (arguments, dir) => {
@@ -72,5 +73,6 @@ exports.deployService = (dir) => {
 }
 
 exports.removeService = (dir) => {
-  execServerless('remove', dir);
+  // execServerless('remove', dir);
+  rimraf.sync(dir)
 }

@@ -1,12 +1,13 @@
 language: node_js
 node_js:
-  - "5.10"
+  - "6.10"
   - "4.4"
 services:
   - docker
 before_install:
   - docker pull localstack/localstack
   - docker run -d -p 4567-4582:4567-4582 -p 8080:8080 localstack/localstack
+  - echo "127.0.0.1 localstack" >> /etc/hosts
 script:
   - npm run test
   - npm run integ
