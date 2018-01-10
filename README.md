@@ -182,5 +182,5 @@ yarn install
 yarn version
 npm login
 npm publish
-
+git push --tags
 ```
