@@ -11,8 +11,8 @@
     "test:integration": "jasmine --config=spec/support/jasmine_integration.json",
     "test:integration:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine --config=spec/support/jasmine_integration.json",
     "test:cover": "jasmine --coverage",
-    "prepublish": "yarn run test",
-    "preversion": "yarn run test"
+    "prepublish": "npm run test",
+    "preversion": "npm run test"
   },
   "repository": {
     "type": "git",
