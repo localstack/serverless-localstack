@@ -8,9 +8,11 @@
     "lint-fix": "eslint . --fix",
     "test": "jasmine --config=spec/support/jasmine.json",
     "test:watch": "jasmine --config=spec/support/jasmine.json",
-    "integ": "jasmine --config=spec/support/jasmine_integration.json",
-    "integ:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine --config=spec/support/jasmine_integration.json",
-    "test:cover": "jasmine --coverage"
+    "test:integration": "jasmine --config=spec/support/jasmine_integration.json",
+    "test:integration:watch": "nodemon -L -i spec/integrate ./node_modules/.bin/jasmine --config=spec/support/jasmine_integration.json",
+    "test:cover": "jasmine --coverage",
+    "prepublish": "yarn run test",
+    "preversion": "yarn run test"
   },
   "repository": {
     "type": "git",

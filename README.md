@@ -158,9 +158,11 @@ git clone https://github.com/temyers/serverless-localstack
 ##### Setup your project
 
 ```
+cd /path/to/serverless-localstack
+npm link
+
 cd myproject
-mkdir .serverless_plugins
-ln -s /absolute/path/to/serverless-localstack .serverless_plugins/serverless-localstack
+npm link serverless-localstack
 ```
 
 ### Optional Debug Flag
@@ -171,4 +173,14 @@ An optional debug flag is supported via serverless.yml that will enable addition
 custom:
   localstack:
     debug: true
+```
+
+## Publishing to NPM
+
+```
+yarn install
+yarn version
+npm login
+npm publish
+
 ```
