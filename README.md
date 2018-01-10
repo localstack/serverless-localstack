@@ -1,4 +1,4 @@
-# serverless-localstack
+# serverless-localstack [![Build Status](https://travis-ci.org/temyers/serverless-localstack.svg?branch=master)](https://travis-ci.org/temyers/serverless-localstack)
 [Serverless](https://serverless.com/) Plugin to support running against [Atlassian Labs Localstack](https://github.com/atlassian/localstack).
 
 This plugin allows any requests to AWS to be redirected to a running Localstack instance.
