@@ -20,16 +20,20 @@ The easiest way to get started is to install via npm.
 If you'd like to install serverless-localstack via source:
 
 #### Clone the repository
-      git clone https://github.com/temyers/serverless-localstack
+
+```
+git clone https://github.com/temyers/serverless-localstack
+cd serverless-localstack
+npm link      
+```
 
 #### Install the plugin
 
-In order for the plugin to be recognized it must first be enabled via the .serverless_plugins directory.
+Use `npm link` to reference the plugin
 
 ```
 cd project-path/
-mkdir .serverless_plugins
-ln -s /absolute/path/to/plugin .serverless_plugins/serverless-plugin-localstack
+npm link serverless-localstack
 ```
 
 ## Configuring
@@ -46,7 +50,7 @@ A "host" or individual endpoints must be configured or this plugin will be deact
 service: myService
 
 plugins:
-  - serverless-plugin-localstack
+  - serverless-localstack
 
 custom:
   localstack:
@@ -69,7 +73,7 @@ custom:
 service: myService
 
 plugins:
-  - serverless-plugin-localstack
+  - serverless-localstack
 
 custom:
   localstack:
@@ -84,7 +88,7 @@ custom:
 service: myService
 
 plugins:
-  - serverless-plugin-localstack
+  - serverless-localstack
 
 custom:
   localstack:
