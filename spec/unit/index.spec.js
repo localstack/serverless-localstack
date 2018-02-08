@@ -118,7 +118,7 @@ describe("LocalstackPlugin", () => {
           endpointFile: 'missing.json'
         }
 
-        let plugin = () => {let instnace = new LocalstackPlugin(serverless, {}); instance.readConfig() }
+        let plugin = () => {let pluginInstance = new LocalstackPlugin(serverless, {}); pluginInstance.readConfig() }
 
         expect(plugin).to.throw('Endpoint: "missing.json" is invalid:')
       });
@@ -127,7 +127,7 @@ describe("LocalstackPlugin", () => {
         serverless.service.custom.localstack = {
           endpointFile: 'README.md'
         }
-        let plugin = () => {let instnace = new LocalstackPlugin(serverless, {}); instance.readConfig() }
+        let plugin = () => {let pluginInstance = new LocalstackPlugin(serverless, {}); pluginInstance.readConfig() }
         expect(plugin).to.throw(/Endpoint: "README.md" is invalid:/)
       });
 
