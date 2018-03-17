@@ -7,19 +7,9 @@ const util = require('util');
 
 class LocalstackPlugin {
   constructor(serverless, options) {
-    this.config = serverless.service.custom && serverless.service.custom.localstack || {};
-    Object.assign(this.config, options);
-
-    //Get the target deployment stage
-    this.config.stage = ""
-    this.config.options_stage = options.stage || undefined
-
     this.serverless = serverless;
+    this.options = options;
 
-    //If the target stage is listed in config.stages use the serverless-localstack-plugin
-    //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
-    this.endpoints = this.config.endpoints || {};
-    this.endpointFile = this.config.endpointFile;
     this.commands = {
       deploy: {}
     };
@@ -38,10 +28,6 @@ class LocalstackPlugin {
       'sqs': 4576
     };
 
-    if (this.endpointFile) {
-      this.loadEndpointsFromDisk(this.endpointFile);
-    }
-
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
@@ -50,10 +36,28 @@ class LocalstackPlugin {
   }
 
   beforeDeploy(){
+    this.readConfig();
     this.getStageVariable();
     this.reconfigureAWS();
   }
 
+  readConfig(){
+    this.config = this.serverless.service.custom && this.serverless.service.custom.localstack || {};
+    Object.assign(this.config, this.options);
+
+    //Get the target deployment stage
+    this.config.stage = ""
+    this.config.options_stage = this.options.stage || undefined
+
+    //If the target stage is listed in config.stages use the serverless-localstack-plugin
+    //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
+    this.endpoints = this.config.endpoints || {};
+    this.endpointFile = this.config.endpointFile;
+    if (this.endpointFile) {
+      this.loadEndpointsFromDisk(this.endpointFile);
+    }
+  }
+  
   getStageVariable(){
     this.debug("config.options_stage: " + this.config.options_stage);
     this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);

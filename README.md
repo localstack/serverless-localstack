@@ -13,7 +13,7 @@ Pre-requisites:
 The easiest way to get started is to install via npm.
 
     npm install -g serverless
-    npm install -g serverless-localstack
+    npm install --save-dev serverless-localstack
 
 ## Installation (without npm)
 
