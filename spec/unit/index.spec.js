@@ -175,15 +175,6 @@ describe("LocalstackPlugin", () => {
       expect(templateUrl).to.startsWith(`${config.host}`);
     });
 
-    it('should not send validateTemplate calls to localstack', () => {
-      let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
-      let request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, {})
-      awsProvider.request('S3','validateTemplate',{});
-
-      expect(request.called).to.be.false;
-    });
-
   });
 
 })
