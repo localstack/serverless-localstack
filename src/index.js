@@ -133,7 +133,7 @@ class LocalstackPlugin {
 
   interceptRequest(service, method, params) {
     if (AWS.config[service.toLowerCase()]) {
-      this.debug(`Using custom endpoint for ${service}: ${AWS.config.s3.endpoint}`);
+      this.debug(`Using custom endpoint for ${service}: ${AWS.config[service].endpoint}`);
 
       if (AWS.config['s3'] && params.TemplateURL) {
         this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
