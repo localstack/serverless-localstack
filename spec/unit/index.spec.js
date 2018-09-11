@@ -29,7 +29,7 @@ describe("LocalstackPlugin", () => {
   };
 
   beforeEach(() => {
-    sandbox = sinon.sandbox.create();
+    sandbox = sinon.createSandbox();
     serverless = new Serverless();
     awsProvider = new AwsProvider(serverless, {});
     awsConfig = new AWS.Config();
@@ -61,6 +61,7 @@ describe("LocalstackPlugin", () => {
         beforeEach(() => {
           serverless.service.custom = {};
           instance = new LocalstackPlugin(serverless, {});
+          simulateBeforeDeployHooks(instance)
         });
 
         it('should not set the endpoints', () => {
@@ -68,7 +69,7 @@ describe("LocalstackPlugin", () => {
         });
 
         it('should not set the endpoint file', () => {
-          expect(instance.endpointFile).to.be.empty;
+          expect(instance.endpointFile).to.be.undefined;
         });
     });
 
