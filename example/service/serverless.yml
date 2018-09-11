@@ -5,12 +5,12 @@ provider:
   runtime: nodejs6.10
 
 plugins:
-  - serverless-plugin-localstack
+  - serverless-localstack
 
 custom:
   localstack:
     host: http://localhost
-    endpoint: localstack_endpoints.json
+    endpointFile: localstack_endpoints.json
 
 functions:
   hello:
