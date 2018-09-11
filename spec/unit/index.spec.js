@@ -151,6 +151,7 @@ describe("LocalstackPlugin", () => {
         send() {
           return this;
         }
+        
       }
 
       serverless.providers.aws.sdk.S3 = FakeService;
@@ -167,7 +168,7 @@ describe("LocalstackPlugin", () => {
       instance = new LocalstackPlugin(serverless, {})
       simulateBeforeDeployHooks(instance);
 
-      awsProvider.request('S3','foo',{
+      awsProvider.request('s3','foo',{
         TemplateURL: pathToTemplate
       });
       expect(request.called).to.be.true;
