@@ -67,7 +67,7 @@ class LocalstackPlugin {
 
   reconfigureAWS() {
     if(this.config.stages === undefined || this.config.stages.indexOf(this.config.stage) > -1){
-      this.log('Using serverless-localstack-plugin');
+      this.log('Using serverless-localstack');
       const host = this.config.host;
       let configChanges = {};
 
@@ -96,7 +96,7 @@ class LocalstackPlugin {
     }
     else {
       this.endpoints = {}
-      this.log("Skipping serverless-localstack-plugin:\ncustom.localstack.stages: " +
+      this.log("Skipping serverless-localstack:\ncustom.localstack.stages: " +
         JSON.stringify(this.config.stages) +
         "\nstage: " +
         this.config.stage
@@ -133,7 +133,7 @@ class LocalstackPlugin {
 
   interceptRequest(service, method, params) {
     if (AWS.config[service.toLowerCase()]) {
-      this.debug(`Using custom endpoint for ${service}: ${AWS.config['s3'].endpoint}`);
+      this.debug(`Using custom endpoint for ${service}: ${AWS.config.s3.endpoint}`);
 
       if (AWS.config['s3'] && params.TemplateURL) {
         this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
