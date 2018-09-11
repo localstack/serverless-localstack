@@ -8,6 +8,7 @@ services:
       - .:/app
       - ~/.aws/:/root/.aws
       - ~/.gitconfig:/root/.gitconfig
+      - ~/.gitconfig.local:/root/.gitconfig.local
     environment:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
