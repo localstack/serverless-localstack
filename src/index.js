@@ -132,6 +132,12 @@ class LocalstackPlugin {
   }
 
   interceptRequest(service, method, params) {
+    // // Template validation is not supported in LocalStack
+    if (method == "validateTemplate") {
+      this.log('Skipping template validation: Unsupported in Localstack');
+      return Promise.resolve("");
+    }
+
     if (AWS.config[service.toLowerCase()]) {
       this.debug(`Using custom endpoint for ${service}: ${AWS.config[service.toLowerCase()].endpoint}`);
 
@@ -142,6 +148,7 @@ class LocalstackPlugin {
     }
 
     return this.awsProviderRequest(service, method, params);
+
   }
 }
 
