@@ -57,7 +57,7 @@ class LocalstackPlugin {
       this.loadEndpointsFromDisk(this.endpointFile);
     }
   }
-  
+
   getStageVariable(){
     this.debug("config.options_stage: " + this.config.options_stage);
     this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);
@@ -133,7 +133,7 @@ class LocalstackPlugin {
 
   interceptRequest(service, method, params) {
     if (AWS.config[service.toLowerCase()]) {
-      this.debug(`Using custom endpoint for ${service}: ${AWS.config[service].endpoint}`);
+      this.debug(`Using custom endpoint for ${service}: ${AWS.config[service.toLowerCase()].endpoint}`);
 
       if (AWS.config['s3'] && params.TemplateURL) {
         this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
