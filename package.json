@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/temyers/serverless-localstack",
   "dependencies": {
-    "aws-sdk": "^2.7.13",
+    "aws-sdk": "^2.178.0",
     "bluebird": "^3.4.6"
   },
   "devDependencies": {
