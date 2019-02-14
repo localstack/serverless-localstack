@@ -25,7 +25,8 @@ class LocalstackPlugin {
       's3': 4572,
       'ses': 4579,
       'sns': 4575,
-      'sqs': 4576
+      'sqs': 4576,
+      'sts': 4592
     };
 
     // Intercept Provider requests
