@@ -15,6 +15,7 @@ services:
       - AWS_PROFILE
       - AWS_SESSION_TOKEN
       - AWS_SECURITY_TOKEN
+      - SNYK_TOKEN
     entrypoint:
       - /bin/bash
   localstack:
