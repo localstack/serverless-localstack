@@ -1,7 +1,7 @@
-# serverless-localstack [![Build Status](https://travis-ci.org/temyers/serverless-localstack.svg?branch=master)](https://travis-ci.org/temyers/serverless-localstack)
-
 ## Archived
 This project is no longer under active development.
+
+# serverless-localstack [![Build Status](https://travis-ci.org/temyers/serverless-localstack.svg?branch=master)](https://travis-ci.org/temyers/serverless-localstack)
 
 [Serverless](https://serverless.com/) Plugin to support running against [Atlassian Labs Localstack](https://github.com/atlassian/localstack).
 
