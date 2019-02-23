@@ -4,6 +4,8 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const packageServicePlugin = require('serverless/lib/plugins/package/lib/packageService')
+
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -22,28 +24,82 @@ class LocalstackPlugin {
       'cloudwatch': 4582,
       'lambda': 4574,
       'dynamodb': 4567,
+      'kinesis': 4568,
+      'route53': 4580,
+      'stepfunctions': 4585,
+      'es': 4578,
       's3': 4572,
       'ses': 4579,
       'sns': 4575,
       'sqs': 4576,
-      'sts': 4592
+      'sts': 4592,
+      'iam': 4592
     };
 
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
     this.awsProvider.request = this.interceptRequest.bind(this);
-    //this.reconfigureAWS();
+
+    // Patch plugin methods
+    this.skipIfMountLambda('Package', 'packageService')
+    function compileFunction(functionName) {
+      if (!this.shouldMountCode()) {
+        return Promise.resolve();
+      }
+      const functionObject = this.serverless.service.getFunction(functionName);
+      functionObject.package = functionObject.package || {};
+      functionObject.package.artifact = __filename;
+      return compileFunction._functionOriginal(functionName).then(() => {
+       const resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+       Object.keys(resources).forEach(id => {
+         const res = resources[id];
+         if (res.Type === 'AWS::Lambda::Function') {
+           res.Properties.Code.S3Bucket = '__local__';
+           res.Properties.Code.S3Key = process.cwd();
+         }
+       })
+      });
+    }
+    this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction)
+    this.skipIfMountLambda('AwsDeploy', 'extendedValidate')
+    this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers')
+
+    this.readConfig();
   }
 
-  beforeDeploy(){
-    this.readConfig();
+  beforeDeploy() {
     this.getStageVariable();
     this.reconfigureAWS();
   }
 
-  readConfig(){
-    this.config = this.serverless.service.custom && this.serverless.service.custom.localstack || {};
+  findPlugin(name) {
+    return this.serverless.pluginManager.plugins.find(p => p.constructor.name === name);
+  }
+
+  skipIfMountLambda(pluginName, functionName, overrideFunction) {
+    const plugin = this.findPlugin(pluginName);
+    if (!plugin) {
+      this.log('Warning: Unable to find plugin named: ' + pluginName)
+      return
+    }
+    const functionOriginal = plugin[functionName].bind(plugin);
+
+    function overrideFunctionDefault() {
+      if (this.shouldMountCode()) {
+        const fqn = pluginName + '.' + functionName;
+        this.log('Skip plugin function ' + fqn + ' (lambda.mountCode flag is enabled)');
+        return Promise.resolve();
+      }
+      return functionOriginal.apply(null, arguments);
+    }
+    overrideFunction = overrideFunction || overrideFunctionDefault;
+    overrideFunction._functionOriginal = functionOriginal;
+    plugin[functionName] = overrideFunction.bind(this);
+  }
+
+  readConfig() {
+    this.config = (this.serverless.service.custom || {}).localstack || {};
     Object.assign(this.config, this.options);
 
     //Get the target deployment stage
@@ -59,7 +115,7 @@ class LocalstackPlugin {
     }
   }
 
-  getStageVariable(){
+  getStageVariable() {
     this.debug("config.options_stage: " + this.config.options_stage);
     this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);
     this.debug("serverless.service.provider.stage: " + this.serverless.service.provider.stage);
@@ -132,8 +188,12 @@ class LocalstackPlugin {
     }
   }
 
+  shouldMountCode() {
+    return (this.config.lambda || {}).mountCode
+  }
+
   interceptRequest(service, method, params) {
-    // // Template validation is not supported in LocalStack
+    // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
       this.log('Skipping template validation: Unsupported in Localstack');
       return Promise.resolve("");
@@ -149,7 +209,6 @@ class LocalstackPlugin {
     }
 
     return this.awsProviderRequest(service, method, params);
-
   }
 }
 
