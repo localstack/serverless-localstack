@@ -4,7 +4,6 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
-const packageServicePlugin = require('serverless/lib/plugins/package/lib/packageService')
 
 
 class LocalstackPlugin {
