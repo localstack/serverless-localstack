@@ -1,23 +1,18 @@
-## Archived
-This project is no longer under active development.
-
-# localstack-serverless
+# LocalStack Serverless Plugin
 
 [Serverless](https://serverless.com/) Plugin to support running against [Localstack](https://github.com/localstack/localstack).
 
-This plugin allows any requests to AWS to be redirected to a running Localstack instance.
-
-WARNING: This plugin is very much WIP
+This plugin allows Serverless applications to be deployed and tested on your local machine. Any requests to AWS to be redirected to a running LocalStack instance.
 
 Pre-requisites:
-* Localstack
+* LocalStack
 
 ## Installation
 
 The easiest way to get started is to install via npm.
 
     npm install -g serverless
-    npm install --save-dev localstack-localstack
+    npm install --save-dev localstack-serverless
 
 ## Installation (without npm)
 
@@ -48,7 +43,7 @@ global override support while also override specific endpoints.
 
 A "host" or individual endpoints must be configured or this plugin will be deactivated.
 
-#### Configuring endpoints via serverless.yml
+### Configuring endpoints via serverless.yml
 
 ```
 service: myService
@@ -69,9 +64,21 @@ custom:
       SQS: http://localhost:4576
       Lambda: http://localhost:4574
       Kinesis: http://localhost:4568
+    lambda:
+      # Enable this flag to improve performance
+      mountCode: True
 ```
 
-#### Configuring endpoints via JSON
+### Mounting Lambda code for better performance
+
+Note that the `localstack.lambda.mountCode` flag above will mount the local directory
+into the Docker container that runs the Lambda code in LocalStack. If you remove this
+flag, your Lambda code is deployed in the traditional way which is more in line with
+how things work in AWS, but also comes with a performance penalty: packaging the code,
+uploading it to the local S3 service, downloading it in the local Lambda API, extracting
+it, and finally copying/mounting it into a Docker container to run the Lambda.
+
+### Configuring endpoints via JSON
 
 ```
 service: myService
@@ -84,8 +91,8 @@ custom:
     endpointFile: path/to/file.json
 ```
 
-#### Only enable localstack-serverless for the listed stages
-* ```serverless deploy --stage local``` would deploy to localstack.
+### Only enable localstack-serverless for the listed stages
+* ```serverless deploy --stage local``` would deploy to LocalStack.
 * ```serverless deploy --stage production``` would deploy to aws.
 
 ```
@@ -102,68 +109,21 @@ custom:
     endpointFile: path/to/file.json
 ```
 
-## Localstack
+## LocalStack
 
-For full documentation, see https://bitbucket.org/atlassian/localstack
-
-#### Installing via PIP
-
-The easiest way to get started with Localstack is to install it via Python's pip.
-
-```
-pip install localstack
-```
-
-#### Installing via Source
-
-Clone the repository
-```
-git clone git@bitbucket.org:atlassian/localstack.git
-```
-
-### Running Localstack
-
-There are multiple ways to run Localstack.
-
-#### Starting Localstack via Docker
-
-If Localstack is installed via pip
-
-```
-localstack start --docker
-```
-
-If Localstack is installed via source
-
-```
-make docker-run
-```
-
-#### Starting Localstack without Docker
-
-If Localstack is installed via pip
-
-```
-localstack start
-```
-
-If Localstack is installed via source
-
-```
-make infra
-```
+For full documentation, please refer to https://github.com/localstack/localstack
 
 ## Contributing
 
 Setting up a development environment is easy using Serverless' plugin framework.
 
-##### Clone the Repo
+### Clone the Repo
 
 ```
 git clone https://github.com/localstack/localstack-serverless
 ```
 
-##### Setup your project
+### Setup your project
 
 ```
 cd /path/to/localstack-serverless
@@ -175,7 +135,7 @@ npm link localstack-serverless
 
 ### Optional Debug Flag
 
-An optional debug flag is supported via serverless.yml that will enable additional debug logs.
+An optional debug flag is supported via `serverless.yml` that will enable additional debug logs.
 
 ```
 custom:
