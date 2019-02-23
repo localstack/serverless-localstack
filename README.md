@@ -1,9 +1,9 @@
 ## Archived
 This project is no longer under active development.
 
-# serverless-localstack [![Build Status](https://travis-ci.org/temyers/serverless-localstack.svg?branch=master)](https://travis-ci.org/temyers/serverless-localstack)
+# localstack-serverless
 
-[Serverless](https://serverless.com/) Plugin to support running against [Atlassian Labs Localstack](https://github.com/atlassian/localstack).
+[Serverless](https://serverless.com/) Plugin to support running against [Localstack](https://github.com/localstack/localstack).
 
 This plugin allows any requests to AWS to be redirected to a running Localstack instance.
 
@@ -17,17 +17,17 @@ Pre-requisites:
 The easiest way to get started is to install via npm.
 
     npm install -g serverless
-    npm install --save-dev serverless-localstack
+    npm install --save-dev localstack-localstack
 
 ## Installation (without npm)
 
-If you'd like to install serverless-localstack via source:
+If you'd like to install localstack-serverless via source:
 
 #### Clone the repository
 
 ```
-git clone https://github.com/temyers/serverless-localstack
-cd serverless-localstack
+git clone https://github.com/localstack/localstack-serverless
+cd localstack-serverless
 npm link      
 ```
 
@@ -37,7 +37,7 @@ Use `npm link` to reference the plugin
 
 ```
 cd project-path/
-npm link serverless-localstack
+npm link localstack-serverless
 ```
 
 ## Configuring
@@ -54,7 +54,7 @@ A "host" or individual endpoints must be configured or this plugin will be deact
 service: myService
 
 plugins:
-  - serverless-localstack
+  - localstack-serverless
 
 custom:
   localstack:
@@ -77,14 +77,14 @@ custom:
 service: myService
 
 plugins:
-  - serverless-localstack
+  - localstack-serverless
 
 custom:
   localstack:
     endpointFile: path/to/file.json
 ```
 
-#### Only enable serverless-plugin-localstack for the listed stages
+#### Only enable localstack-serverless for the listed stages
 * ```serverless deploy --stage local``` would deploy to localstack.
 * ```serverless deploy --stage production``` would deploy to aws.
 
@@ -92,7 +92,7 @@ custom:
 service: myService
 
 plugins:
-  - serverless-localstack
+  - localstack-serverless
 
 custom:
   localstack:
@@ -160,17 +160,17 @@ Setting up a development environment is easy using Serverless' plugin framework.
 ##### Clone the Repo
 
 ```
-git clone https://github.com/temyers/serverless-localstack
+git clone https://github.com/localstack/localstack-serverless
 ```
 
 ##### Setup your project
 
 ```
-cd /path/to/serverless-localstack
+cd /path/to/localstack-serverless
 npm link
 
 cd myproject
-npm link serverless-localstack
+npm link localstack-serverless
 ```
 
 ### Optional Debug Flag
