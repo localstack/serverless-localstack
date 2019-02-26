@@ -12,17 +12,17 @@ Pre-requisites:
 The easiest way to get started is to install via npm.
 
     npm install -g serverless
-    npm install --save-dev localstack-serverless
+    npm install --save-dev serverless-localstack
 
 ## Installation (without npm)
 
-If you'd like to install localstack-serverless via source:
+If you'd like to install serverless-localstack via source:
 
 #### Clone the repository
 
 ```
-git clone https://github.com/localstack/localstack-serverless
-cd localstack-serverless
+git clone https://github.com/localstack/serverless-localstack
+cd serverless-localstack
 npm link      
 ```
 
@@ -32,7 +32,7 @@ Use `npm link` to reference the plugin
 
 ```
 cd project-path/
-npm link localstack-serverless
+npm link serverless-localstack
 ```
 
 ## Configuring
@@ -49,12 +49,13 @@ A "host" or individual endpoints must be configured or this plugin will be deact
 service: myService
 
 plugins:
-  - localstack-serverless
+  - serverless-localstack
 
 custom:
   localstack:
     host: http://localhost
     endpoints:
+      # This section can be used for customization but is not strictly needed
       S3: http://localhost:4572
       DynamoDB: http://localhost:4570
       CloudFormation: http://localhost:4581
@@ -84,14 +85,14 @@ it, and finally copying/mounting it into a Docker container to run the Lambda.
 service: myService
 
 plugins:
-  - localstack-serverless
+  - serverless-localstack
 
 custom:
   localstack:
     endpointFile: path/to/file.json
 ```
 
-### Only enable localstack-serverless for the listed stages
+### Only enable serverless-localstack for the listed stages
 * ```serverless deploy --stage local``` would deploy to LocalStack.
 * ```serverless deploy --stage production``` would deploy to aws.
 
@@ -99,7 +100,7 @@ custom:
 service: myService
 
 plugins:
-  - localstack-serverless
+  - serverless-localstack
 
 custom:
   localstack:
@@ -120,17 +121,17 @@ Setting up a development environment is easy using Serverless' plugin framework.
 ### Clone the Repo
 
 ```
-git clone https://github.com/localstack/localstack-serverless
+git clone https://github.com/localstack/serverless-localstack
 ```
 
 ### Setup your project
 
 ```
-cd /path/to/localstack-serverless
+cd /path/to/serverless-localstack
 npm link
 
 cd myproject
-npm link localstack-serverless
+npm link serverless-localstack
 ```
 
 ### Optional Debug Flag
@@ -143,12 +144,7 @@ custom:
     debug: true
 ```
 
-## Publishing to NPM
+## Change Log
 
-```
-yarn install
-yarn version
-npm login
-npm publish
-git push --tags
-```
+* v0.4.3: Support local mounting of Lambda code to improve performance
+* v0.4.0: add support for local STS
