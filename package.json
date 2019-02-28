@@ -31,8 +31,7 @@
   },
   "homepage": "https://github.com/localstack/serverless-localstack",
   "dependencies": {
-    "aws-sdk": "^2.402.0",
-    "bluebird": "^3.4.6"
+    "aws-sdk": "^2.402.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
@@ -41,13 +40,9 @@
     "jasmine": "^3.2.0",
     "json2yaml": "^1.1.0",
     "nodemon": "^1.18.10",
-    "request": "^2.88.0",
-    "request-promise": "^4.1.1",
     "rimraf": "^2.6.2",
     "serverless": "^1.37.1",
     "sinon": "^6.2.0",
-    "source-map-support": "^0.5.9",
-    "tempy": "^0.2.1",
-    "uuid": "^3.1.0"
+    "tempy": "^0.2.1"
   }
 }
