@@ -79,6 +79,14 @@ how things work in AWS, but also comes with a performance penalty: packaging the
 uploading it to the local S3 service, downloading it in the local Lambda API, extracting
 it, and finally copying/mounting it into a Docker container to run the Lambda.
 
+### Environment Configurations
+
+* `LAMBDA_MOUNT_CWD`: Allow users to define a custom working directory for Lambda mounts.
+   For example, when deploying a Serverless app in a Linux VM (that runs Docker) on a
+   Windows host where the `-v <local_dir>:<cont_dir>` flag to `docker run` requires us
+   to specify a `local_dir` relative to the Windows host file system that is mounted
+   into the VM (e.g., `"c:/users/guest/..."`).
+
 ### Configuring endpoints via JSON
 
 ```
@@ -146,5 +154,6 @@ custom:
 
 ## Change Log
 
+* v0.4.4: Add `LAMBDA_MOUNT_CWD` configuration for customizing Lambda mount dir
 * v0.4.3: Support local mounting of Lambda code to improve performance
-* v0.4.0: add support for local STS
+* v0.4.0: Add support for local STS
