@@ -56,6 +56,14 @@ class LocalstackPlugin {
          if (res.Type === 'AWS::Lambda::Function') {
            res.Properties.Code.S3Bucket = '__local__';
            res.Properties.Code.S3Key = process.cwd();
+           if (process.env.LAMBDA_MOUNT_CWD) {
+             // Allow users to define a custom working directory for Lambda mounts.
+             // For example, when deploying a Serverless app in a Linux VM (that runs Docker) on a
+             // Windows host where the "-v <local_dir>:<cont_dir>" flag to "docker run" requires us
+             // to specify a "local_dir" relative to the Windows host file system that is mounted
+             // into the VM (e.g., "c:/users/guest/...").
+             res.Properties.Code.S3Key = process.env.LAMBDA_MOUNT_CWD;
+           }
          }
        })
       });
