@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/localstack/serverless-localstack.svg)](https://travis-ci.org/localstack/serverless-localstack)
+
 # LocalStack Serverless Plugin
 
 [Serverless](https://serverless.com/) Plugin to support running against [Localstack](https://github.com/localstack/localstack).
@@ -37,13 +39,14 @@ npm link serverless-localstack
 
 ## Configuring
 
-There are two ways to configure the plugin, via a JSON file or via serverless.yml. There are two supported methods for
-configuring the endpoints, globally via the "host" property, or individually. These properties may be mixed, allowing for
+There are two ways to configure the plugin, via a JSON file or via `serverless.yml`.
+There are two supported methods for configuring the endpoints, globally via the
+`host` property, or individually. These properties may be mixed, allowing for
 global override support while also override specific endpoints.
 
-A "host" or individual endpoints must be configured or this plugin will be deactivated.
+A `host` or individual endpoints must be configured or this plugin will be deactivated.
 
-### Configuring endpoints via serverless.yml
+### Configuration via serverless.yml
 
 ```
 service: myService
@@ -54,8 +57,11 @@ plugins:
 custom:
   localstack:
     host: http://localhost
+    stages:
+      # list of stages for which the plugin should be enabled
+      - local
     endpoints:
-      # This section can be used for customization but is not strictly needed
+      # This section is optional - can be used for customizing the target endpoints
       S3: http://localhost:4572
       DynamoDB: http://localhost:4570
       CloudFormation: http://localhost:4581
@@ -68,7 +74,16 @@ custom:
     lambda:
       # Enable this flag to improve performance
       mountCode: True
+  stages:
+    local:
+      ...
 ```
+
+### Activating the plugin for certain stages
+
+Note the `stages` attribute in the config above. The `serverless-localstack` plugin gets activated if either:
+  1. `serverless` is invoked with the default stage ("dev") and no `stages` config is provided; or
+  2. `serverless` is invoked with a `--stage` flag and this stage is included in the `stages` config
 
 ### Mounting Lambda code for better performance
 
@@ -154,6 +169,7 @@ custom:
 
 ## Change Log
 
+* v0.4.5: Fix config to activate or deactivate the plugin for certain stages
 * v0.4.4: Add `LAMBDA_MOUNT_CWD` configuration for customizing Lambda mount dir
 * v0.4.3: Support local mounting of Lambda code to improve performance
 * v0.4.0: Add support for local STS
