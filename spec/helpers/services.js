@@ -20,7 +20,7 @@ const defaultConfig = {
   ],
   custom: {
     localstack: {
-      host: 'http://localstack',
+      host: 'http://localhost',
       debug: debug,
     }
   },
@@ -60,7 +60,7 @@ exports.createService = (config, dir) => {
   dir = dir || tempy.directory();
   config = Object.assign({}, defaultConfig, config);
 
-  execServerless('create --template aws-nodejs', dir)
+  execServerless('create --template aws-nodejs', dir);
 
   fs.writeFileSync(`${dir}/serverless.yml`, YAML.stringify(config));
   installPlugin(dir);

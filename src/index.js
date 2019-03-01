@@ -4,11 +4,20 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
+// Default stage used by serverless
+const defaultStage = 'dev';
+
 
 class LocalstackPlugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
+
+    this.readConfig();
+
+    if (!this.isActive()) {
+      return;
+    }
 
     this.commands = {
       deploy: {}
@@ -67,11 +76,9 @@ class LocalstackPlugin {
        })
       });
     }
-    this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction)
-    this.skipIfMountLambda('AwsDeploy', 'extendedValidate')
-    this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers')
-
-    this.readConfig();
+    this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction);
+    this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
+    this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
   }
 
   beforeDeploy() {
@@ -109,8 +116,8 @@ class LocalstackPlugin {
     Object.assign(this.config, this.options);
 
     //Get the target deployment stage
-    this.config.stage = ""
-    this.config.options_stage = this.options.stage || undefined
+    this.config.stage = "";
+    this.config.options_stage = this.options.stage || undefined;
 
     //If the target stage is listed in config.stages use the serverless-localstack-plugin
     //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
@@ -121,15 +128,25 @@ class LocalstackPlugin {
     }
   }
 
+  isActive() {
+    // Activate the plugin if either:
+    //   (1) serverless is invoked with the default stage ("dev") and no `stages` config is provided; or
+    //   (2) serverless is invoked with a --stage flag and this stage is included in the `stages` config
+    const noStageUsed = this.config.stages === undefined && (this.options.stage || defaultStage) == defaultStage;
+    const includedInStages = this.config.stages && this.config.stages.includes(this.options.stage);
+    return noStageUsed || includedInStages;
+  }
+
   getStageVariable() {
     this.debug("config.options_stage: " + this.config.options_stage);
     this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);
     this.debug("serverless.service.provider.stage: " + this.serverless.service.provider.stage);
-    this.config.stage = this.config.options_stage || this.serverless.service.custom.stage || this.serverless.service.provider.stage
+    this.config.stage = this.config.options_stage || this.serverless.service.custom.stage || this.serverless.service.provider.stage;
+    this.debug("config.stage: " + this.config.stage);
   }
 
   reconfigureAWS() {
-    if(this.config.stages === undefined || this.config.stages.indexOf(this.config.stage) > -1){
+    if(this.isActive()) {
       this.log('Using serverless-localstack');
       const host = this.config.host;
       let configChanges = {};
@@ -160,9 +177,7 @@ class LocalstackPlugin {
     else {
       this.endpoints = {}
       this.log("Skipping serverless-localstack:\ncustom.localstack.stages: " +
-        JSON.stringify(this.config.stages) +
-        "\nstage: " +
-        this.config.stage
+        JSON.stringify(this.config.stages) + "\nstage: " + this.config.stage
       )
     }
   }

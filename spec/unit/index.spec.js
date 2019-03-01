@@ -22,6 +22,7 @@ describe("LocalstackPlugin", () => {
   let awsConfig;
   let instance;
   let sandbox;
+  let defaultPluginState = {};
   let config = {
     host: 'http://localhost',
     debug: debug
@@ -59,7 +60,7 @@ describe("LocalstackPlugin", () => {
 
         beforeEach(() => {
           serverless.service.custom = {};
-          instance = new LocalstackPlugin(serverless, {});
+          instance = new LocalstackPlugin(serverless, defaultPluginState);
           simulateBeforeDeployHooks(instance)
         });
 
@@ -79,7 +80,7 @@ describe("LocalstackPlugin", () => {
             endpointFile: localstackEndpointsFile
           }
         };
-        instance = new LocalstackPlugin(serverless, {})
+        instance = new LocalstackPlugin(serverless, defaultPluginState);
         simulateBeforeDeployHooks(instance);
       });
 
@@ -96,7 +97,7 @@ describe("LocalstackPlugin", () => {
       it('should not set the endpoints if the stages config option does not include the deployment stage', () => {
           serverless.service.custom.localstack.stages = ['production'];
 
-          let plugin = new LocalstackPlugin(serverless, {});
+          let plugin = new LocalstackPlugin(serverless, defaultPluginState);
           simulateBeforeDeployHooks(plugin);
           expect(plugin.endpoints).to.be.empty;
       });
@@ -118,7 +119,10 @@ describe("LocalstackPlugin", () => {
           endpointFile: 'missing.json'
         }
 
-        let plugin = () => {let pluginInstance = new LocalstackPlugin(serverless, {}); pluginInstance.readConfig() }
+        let plugin = () => {
+          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
+          pluginInstance.readConfig();
+        }
 
         expect(plugin).to.throw('Endpoint: "missing.json" is invalid:')
       });
@@ -127,7 +131,10 @@ describe("LocalstackPlugin", () => {
         serverless.service.custom.localstack = {
           endpointFile: 'README.md'
         }
-        let plugin = () => {let pluginInstance = new LocalstackPlugin(serverless, {}); pluginInstance.readConfig() }
+        let plugin = () => {
+          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
+          pluginInstance.readConfig();
+        }
         expect(plugin).to.throw(/Endpoint: "README.md" is invalid:/)
       });
 
@@ -151,7 +158,7 @@ describe("LocalstackPlugin", () => {
         send() {
           return this;
         }
-        
+
       }
 
       serverless.providers.aws.sdk.S3 = FakeService;
@@ -165,7 +172,7 @@ describe("LocalstackPlugin", () => {
     it('should overwrite the S3 hostname', () => {
       let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
       let request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, {})
+      instance = new LocalstackPlugin(serverless, defaultPluginState)
       simulateBeforeDeployHooks(instance);
 
       awsProvider.request('s3','foo',{
@@ -179,7 +186,7 @@ describe("LocalstackPlugin", () => {
     it('should not send validateTemplate calls to localstack', () => {
       let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
       let request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, {})
+      instance = new LocalstackPlugin(serverless, defaultPluginState)
       awsProvider.request('S3','validateTemplate',{});
 
       expect(request.called).to.be.false;

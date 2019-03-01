@@ -6,11 +6,10 @@ services:
   - docker
 before_install:
   - docker pull localstack/localstack
-  - docker run -d -p 4567-4582:4567-4582 -p 4592:4592 -p 8080:8080 localstack/localstack
-  - echo "127.0.0.1 localstack" | sudo tee -a /etc/hosts
+  - docker run -d -p 4567-4582:4567-4582 -p 4592-4593:4592-4593 localstack/localstack
 script:
   - npm run test
   # setup links for integration testing
   - npm link
-  # FIXME - integration test fails first time, due to timing issue - S3 bucket does not exist after initial create stack completes.
-  - npm run test:integration || npm run test:integration || npm run test:integration
+  # Kick off integration test
+  - sleep 5; SLS_DEBUG=1 npm run test:integration
