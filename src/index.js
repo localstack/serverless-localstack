@@ -40,7 +40,7 @@ class LocalstackPlugin {
       'sns': 4575,
       'sqs': 4576,
       'sts': 4592,
-      'iam': 4592
+      'iam': 4593
     };
 
     // Intercept Provider requests
