@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "6.10"
+  - "6.14"
 sudo: required
 services:
   - docker
@@ -8,6 +8,7 @@ before_install:
   - docker pull localstack/localstack
   - docker run -d -p 4567-4582:4567-4582 -p 4592-4593:4592-4593 localstack/localstack
 script:
+  - npm run lint
   - npm run test
   # setup links for integration testing
   - npm link

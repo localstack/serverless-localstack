@@ -1,7 +1,5 @@
 'use strict';
 
-const path = require('path');
-const expect = require('chai').expect;
 const services = require('../helpers/services');
 
 const LONG_TIMEOUT = 30000;

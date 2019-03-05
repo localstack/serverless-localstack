@@ -40,7 +40,7 @@ describe("LocalstackPlugin", () => {
     serverless.setProvider('aws', awsProvider);
     serverless.cli.log = () => {
       if (debug) {
-        console.log.apply(this, arguments);
+        console.log.apply(this, arguments);  // eslint-disable-line no-console
       }
     }
   });
@@ -141,15 +141,10 @@ describe("LocalstackPlugin", () => {
     });
   });
 
-  describe('#request() bound on AWS provider', ()=>{
-    let service;
-    let credentials;
+  describe('#request() bound on AWS provider', () => {
 
     beforeEach(()=> {
       class FakeService {
-        constructor(_credentials) {
-          credentials = _credentials;
-        }
 
         foo() {
           return this;
@@ -170,12 +165,12 @@ describe("LocalstackPlugin", () => {
     });
 
     it('should overwrite the S3 hostname', () => {
-      let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
-      let request = sinon.stub(awsProvider, 'request');
+      const pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
+      const request = sinon.stub(awsProvider, 'request');
       instance = new LocalstackPlugin(serverless, defaultPluginState)
       simulateBeforeDeployHooks(instance);
 
-      awsProvider.request('s3','foo',{
+      awsProvider.request('s3', 'foo', {
         TemplateURL: pathToTemplate
       });
       expect(request.called).to.be.true;
@@ -184,10 +179,9 @@ describe("LocalstackPlugin", () => {
     });
 
     it('should not send validateTemplate calls to localstack', () => {
-      let pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
-      let request = sinon.stub(awsProvider, 'request');
+      const request = sinon.stub(awsProvider, 'request');
       instance = new LocalstackPlugin(serverless, defaultPluginState)
-      awsProvider.request('S3','validateTemplate',{});
+      awsProvider.request('S3', 'validateTemplate', {});
 
       expect(request.called).to.be.false;
     });
