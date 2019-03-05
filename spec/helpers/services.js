@@ -33,8 +33,6 @@ const defaultConfig = {
 
 const installPlugin = (dir) => {
   const pluginsDir = path.join(dir, '.serverless_plugins');
-  const myPluginDir = path.join(pluginsDir, packageJson.name);
-  const rootPluginDir = path.join(__dirname, '../../');
 
   fs.mkdirsSync(pluginsDir);
 

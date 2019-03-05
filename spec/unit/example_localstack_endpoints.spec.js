@@ -1,5 +1,4 @@
 'use strict';
-const AWS = require('aws-sdk');
 const example_endpoints = require('../../example/service/localstack_endpoints');
 const expect = require('chai').expect;
 

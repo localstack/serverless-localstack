@@ -169,6 +169,8 @@ custom:
 
 ## Change Log
 
+* v0.4.7: Set S3 path addressing; add eslint to CI config
+* v0.4.6: Fix port mapping for service endpoints
 * v0.4.5: Fix config to activate or deactivate the plugin for certain stages
 * v0.4.4: Add `LAMBDA_MOUNT_CWD` configuration for customizing Lambda mount dir
 * v0.4.3: Support local mounting of Lambda code to improve performance

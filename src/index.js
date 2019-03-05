@@ -1,8 +1,6 @@
 'use strict';
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const path = require('path');
-const util = require('util');
 
 // Default stage used by serverless
 const defaultStage = 'dev';
@@ -30,17 +28,19 @@ class LocalstackPlugin {
       'cloudformation': 4581,
       'cloudwatch': 4582,
       'lambda': 4574,
-      'dynamodb': 4567,
+      'dynamodb': 4569,
       'kinesis': 4568,
       'route53': 4580,
+      'firehose': 4573,
       'stepfunctions': 4585,
       'es': 4578,
       's3': 4572,
+      'S3': 4572,
       'ses': 4579,
       'sns': 4575,
       'sqs': 4576,
       'sts': 4592,
-      'iam': 4592
+      'iam': 4593
     };
 
     // Intercept Provider requests
@@ -79,11 +79,14 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction);
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
+
+    // reconfigure AWS endpoints based on current stage variables
+    this.getStageVariable();
+    this.reconfigureAWS();
   }
 
   beforeDeploy() {
-    this.getStageVariable();
-    this.reconfigureAWS();
+    // TODO check if still needed
   }
 
   findPlugin(name) {
@@ -149,16 +152,21 @@ class LocalstackPlugin {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
       const host = this.config.host;
-      let configChanges = {};
+      const configChanges = {};
 
       // If a host has been configured, override each service
       if (host) {
         for (const service of Object.keys(this.AWS_SERVICES)) {
+          const serviceLower = service.toLowerCase();
           const port = this.AWS_SERVICES[service];
           const url = `${host}:${port}`;
 
           this.debug(`Reconfiguring service ${service} to use ${url}`);
-          configChanges[service.toLowerCase()] = { endpoint: url };
+          configChanges[serviceLower] = { endpoint: url };
+
+          if (serviceLower == 's3') {
+            configChanges[serviceLower].s3ForcePathStyle = true;
+          }
         }
       }
 
@@ -166,9 +174,11 @@ class LocalstackPlugin {
       if (this.endpoints) {
         for (const service of Object.keys(this.endpoints)) {
           const url = this.endpoints[service];
+          const serviceLower = service.toLowerCase();
 
           this.debug(`Reconfiguring service ${service} to use ${url}`);
-          configChanges[service.toLowerCase()] = { endpoint: url };
+          configChanges[serviceLower] = configChanges[serviceLower] || {};
+          configChanges[serviceLower].endpoint = url;
         }
       }
 
