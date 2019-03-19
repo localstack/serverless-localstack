@@ -1,8 +1,8 @@
 'use strict';
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const {promisify} = require('es6-promisify');
+const exec = promisify(require('child_process').exec);
 
 // Default stage used by Serverless
 const defaultStage = 'dev';
@@ -84,31 +84,18 @@ class LocalstackPlugin {
 
   beforeDeploy() {
     if (this.pluginEnabled) {
-      return;
+      return Promise.resolve();
     }
     this.pluginEnabled = true;
     return this.enablePlugin();
   }
 
-  async enablePlugin() {
+  enablePlugin() {
     // reconfigure AWS endpoints based on current stage variables
     this.getStageVariable();
-    await this.startLocalStack();
-    return this.reconfigureAWS();
-  }
-
-  async startLocalStack() {
-    if (!this.config.autostart) {
-      return;
-    }
-    const stdout = (await exec('docker ps')).stdout;
-    const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
-    if (!exists.length) {
-      this.log('Starting LocalStack in Docker. This can take a while.');
-      const options = {env: {LAMBDA_EXECUTOR: 'docker', DEBUG: '1', DOCKER_FLAGS: '-d'}};
-      await exec('localstack infra start --docker', options);
-      await exec('sleep 15');
-    }
+    return this.startLocalStack().then(
+      () => this.reconfigureAWS()
+    );
   }
 
   findPlugin(name) {
@@ -119,7 +106,7 @@ class LocalstackPlugin {
     const plugin = this.findPlugin(pluginName);
     if (!plugin) {
       this.log('Warning: Unable to find plugin named: ' + pluginName)
-      return
+      return;
     }
     const functionOriginal = plugin[functionName].bind(plugin);
 
@@ -163,11 +150,31 @@ class LocalstackPlugin {
   }
 
   getStageVariable() {
-    this.debug("config.options_stage: " + this.config.options_stage);
-    this.debug("serverless.service.custom.stage: " + this.serverless.service.custom.stage);
-    this.debug("serverless.service.provider.stage: " + this.serverless.service.provider.stage);
+    this.debug('config.options_stage: ' + this.config.options_stage);
+    this.debug('serverless.service.custom.stage: ' + this.serverless.service.custom.stage);
+    this.debug('serverless.service.provider.stage: ' + this.serverless.service.provider.stage);
     this.config.stage = this.config.options_stage || this.serverless.service.custom.stage || this.serverless.service.provider.stage;
-    this.debug("config.stage: " + this.config.stage);
+    this.debug('config.stage: ' + this.config.stage);
+  }
+
+  startLocalStack() {
+    if (!this.config.autostart) {
+      return Promise.resolve();
+    }
+    return exec('docker ps').then(
+      result => {
+        const exists = result.stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
+        if (!exists.length) {
+          this.log('Starting LocalStack in Docker. This can take a while.');
+          const pwd = process.cwd();
+          const options = {env: {
+            LAMBDA_EXECUTOR: 'docker', DEBUG: '1', LAMBDA_REMOTE_DOCKER: '0',
+            DOCKER_FLAGS: `-d -v ${pwd}:${pwd}`}
+          };
+          return exec('localstack infra start --docker; sleep 15', options);
+        }
+      }
+    );
   }
 
   configureAWSCredentials() {
@@ -175,21 +182,24 @@ class LocalstackPlugin {
     process.env.AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || 'test';
   }
 
-  async createDeploymentBucket() {
+  createDeploymentBucket() {
     const bucketName = this.serverless.service.provider.deploymentBucket;
     if (!bucketName) {
-      return;
+      return Promise.resolve();
     }
     const params = {};
-    const buckets = (await this.awsProviderRequest('S3', 'listBuckets', params)).Buckets;
-    const found = buckets.filter((b) => b.Name == bucketName);
-    if (!found.length) {
-      this.log('Creating deployment bucket ' + bucketName);
-      await this.awsProviderRequest('S3', 'createBucket', {'Bucket': bucketName});
-    }
+    return this.awsProviderRequest('S3', 'listBuckets', params).then(
+      (result) => {
+        const found = result.Buckets.filter((b) => b.Name == bucketName);
+        if (!found.length) {
+          this.log('Creating deployment bucket ' + bucketName);
+          return this.awsProviderRequest('S3', 'createBucket', {'Bucket': bucketName});
+        }
+      }
+    );
   }
 
-  async reconfigureAWS() {
+  reconfigureAWS() {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
       const host = this.config.host;
@@ -230,7 +240,7 @@ class LocalstackPlugin {
       this.awsProvider.sdk.config.update(configChanges);
 
       // make sure the deployment bucket exists in the local environment
-      await this.createDeploymentBucket();
+      return this.createDeploymentBucket();
     }
     else {
       this.endpoints = {}
