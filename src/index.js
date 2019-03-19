@@ -149,6 +149,10 @@ class LocalstackPlugin {
     return noStageUsed || includedInStages;
   }
 
+  shouldMountCode() {
+    return (this.config.lambda || {}).mountCode
+  }
+
   getStageVariable() {
     this.debug('config.options_stage: ' + this.config.options_stage);
     this.debug('serverless.service.custom.stage: ' + this.serverless.service.custom.stage);
@@ -157,31 +161,79 @@ class LocalstackPlugin {
     this.debug('config.stage: ' + this.config.stage);
   }
 
+  /**
+   * Start the LocalStack container in Docker, if it is not running yet.
+   */
   startLocalStack() {
     if (!this.config.autostart) {
       return Promise.resolve();
     }
-    return exec('docker ps').then(
-      (stdout) => {
-        const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
-        if (!exists.length) {
-          this.log('Starting LocalStack in Docker. This can take a while.');
-          const pwd = process.cwd();
-          const options = {env: {
-            LAMBDA_EXECUTOR: 'docker', DEBUG: '1', LAMBDA_REMOTE_DOCKER: '0',
-            DOCKER_FLAGS: `-d -v ${pwd}:${pwd}`}
-          };
-          return exec('localstack infra start --docker; sleep 15', options);
+
+    const getContainer = () => {
+      return exec('docker ps').then(
+        (stdout) => {
+          const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
+          if (exists.length) {
+            return exists[0].replace('\t', ' ').split(' ')[0];
+          }
         }
+      )
+    };
+
+    const dockerStartupTimeoutMS = 1000 * 60 * 2;
+
+    const checkStatus = (containerID, timeout) => {
+      timeout = timeout || Date.now() + dockerStartupTimeoutMS;
+      if (Date.now() > timeout) {
+        this.log('Warning: Timeout when checking state of LocalStack container');
+        return;
+      }
+      return this.sleep(4000).then(() => {
+        this.log(`Checking state of LocalStack container ${containerID}`)
+        return exec(`docker logs "${containerID}"`).then(
+          (logs) => {
+            const ready = logs.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
+            if (ready.length) {
+              return Promise.resolve();
+            }
+            return checkStatus(containerID, timeout);
+          }
+        );
+      });
+    }
+
+    return getContainer().then(
+      (containerID) => {
+        if(containerID) {
+          return;
+        }
+        this.log('Starting LocalStack in Docker. This can take a while.');
+        const pwd = process.cwd();
+        const env = this.clone(process.env);
+        env.DEBUG = '1';
+        env.LAMBDA_EXECUTOR = 'docker';
+        env.LAMBDA_REMOTE_DOCKER = '0';
+        env.DOCKER_FLAGS = `-d -v ${pwd}:${pwd}`;
+        env.START_WEB = '0';
+        const options = {env: env};
+        return exec('localstack infra start --docker', options).then(getContainer)
+          .then((containerID) => checkStatus(containerID)
+        );
       }
     );
   }
 
+  /**
+   * Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
+   */
   configureAWSCredentials() {
     process.env.AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || 'test';
     process.env.AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || 'test';
   }
 
+  /**
+   * Create custom Serverless deployment bucket, if one is configured.
+   */
   createDeploymentBucket() {
     const bucketName = this.serverless.service.provider.deploymentBucket;
     if (!bucketName) {
@@ -199,6 +251,9 @@ class LocalstackPlugin {
     );
   }
 
+  /**
+   * Patch the AWS client library to use our local endpoint URLs.
+   */
   reconfigureAWS() {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
@@ -250,6 +305,9 @@ class LocalstackPlugin {
     }
   }
 
+  /**
+   * Load endpoint URLs from config file, if one exists.
+   */
   loadEndpointsFromDisk(endpointFile) {
     let endpointJson;
 
@@ -265,20 +323,6 @@ class LocalstackPlugin {
       this.debug('Intercepting service ' + key);
       this.endpoints[key] = endpointJson[key];
     }
-  }
-
-  log(msg) {
-    this.serverless.cli.log.call(this.serverless.cli, msg);
-  }
-
-  debug(msg) {
-    if (this.config.debug) {
-      this.log(msg);
-    }
-  }
-
-  shouldMountCode() {
-    return (this.config.lambda || {}).mountCode
   }
 
   interceptRequest(service, method, params) {
@@ -299,6 +343,27 @@ class LocalstackPlugin {
 
     return this.awsProviderRequest(service, method, params);
   }
+
+  /** Utility functions below **/
+
+  log(msg) {
+    this.serverless.cli.log.call(this.serverless.cli, msg);
+  }
+
+  debug(msg) {
+    if (this.config.debug) {
+      this.log(msg);
+    }
+  }
+
+  sleep(millis) {
+    return new Promise(resolve => setTimeout(resolve, millis));
+  }
+
+  clone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
 }
 
 module.exports = LocalstackPlugin;
