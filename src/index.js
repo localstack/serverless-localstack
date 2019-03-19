@@ -162,8 +162,8 @@ class LocalstackPlugin {
       return Promise.resolve();
     }
     return exec('docker ps').then(
-      result => {
-        const exists = result.stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
+      (stdout) => {
+        const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0);
         if (!exists.length) {
           this.log('Starting LocalStack in Docker. This can take a while.');
           const pwd = process.cwd();
