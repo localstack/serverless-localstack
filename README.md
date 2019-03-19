@@ -60,6 +60,7 @@ custom:
     stages:
       # list of stages for which the plugin should be enabled
       - local
+    autostart: true  # optional - start LocalStack in Docker on Serverless deploy
     endpoints:
       # This section is optional - can be used for customizing the target endpoints
       S3: http://localhost:4572
@@ -169,6 +170,7 @@ custom:
 
 ## Change Log
 
+* v0.4.8: Auto-create deployment bucket; autostart LocalStack in Docker
 * v0.4.7: Set S3 path addressing; add eslint to CI config
 * v0.4.6: Fix port mapping for service endpoints
 * v0.4.5: Fix config to activate or deactivate the plugin for certain stages

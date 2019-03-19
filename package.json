@@ -1,7 +1,6 @@
-
 {
   "name": "serverless-localstack",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -32,7 +31,8 @@
   },
   "homepage": "https://github.com/localstack/serverless-localstack",
   "dependencies": {
-    "aws-sdk": "^2.402.0"
+    "aws-sdk": "^2.402.0",
+    "es6-promisify": "6.0.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",
