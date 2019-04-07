@@ -53,28 +53,28 @@ class LocalstackPlugin {
     this.skipIfMountLambda('Package', 'packageService')
     function compileFunction(functionName) {
       if (!this.shouldMountCode()) {
-        return Promise.resolve();
+        return compileFunction._functionOriginal.apply(null, arguments);
       }
       const functionObject = this.serverless.service.getFunction(functionName);
       functionObject.package = functionObject.package || {};
       functionObject.package.artifact = __filename;
-      return compileFunction._functionOriginal(functionName).then(() => {
-       const resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
-       Object.keys(resources).forEach(id => {
-         const res = resources[id];
-         if (res.Type === 'AWS::Lambda::Function') {
-           res.Properties.Code.S3Bucket = '__local__';
-           res.Properties.Code.S3Key = process.cwd();
-           if (process.env.LAMBDA_MOUNT_CWD) {
-             // Allow users to define a custom working directory for Lambda mounts.
-             // For example, when deploying a Serverless app in a Linux VM (that runs Docker) on a
-             // Windows host where the "-v <local_dir>:<cont_dir>" flag to "docker run" requires us
-             // to specify a "local_dir" relative to the Windows host file system that is mounted
-             // into the VM (e.g., "c:/users/guest/...").
-             res.Properties.Code.S3Key = process.env.LAMBDA_MOUNT_CWD;
-           }
-         }
-       })
+      return compileFunction._functionOriginal.apply(null, arguments).then(() => {
+        const resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+        Object.keys(resources).forEach(id => {
+          const res = resources[id];
+          if (res.Type === 'AWS::Lambda::Function') {
+            res.Properties.Code.S3Bucket = '__local__';
+            res.Properties.Code.S3Key = process.cwd();
+            if (process.env.LAMBDA_MOUNT_CWD) {
+              // Allow users to define a custom working directory for Lambda mounts.
+              // For example, when deploying a Serverless app in a Linux VM (that runs Docker) on a
+              // Windows host where the "-v <local_dir>:<cont_dir>" flag to "docker run" requires us
+              // to specify a "local_dir" relative to the Windows host file system that is mounted
+              // into the VM (e.g., "c:/users/guest/...").
+              res.Properties.Code.S3Key = process.env.LAMBDA_MOUNT_CWD;
+            }
+          }
+        });
       });
     }
     this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction);
@@ -142,10 +142,11 @@ class LocalstackPlugin {
 
   isActive() {
     // Activate the plugin if either:
-    //   (1) serverless is invoked with the default stage ("dev") and no `stages` config is provided; or
-    //   (2) serverless is invoked with a --stage flag and this stage is included in the `stages` config
-    const noStageUsed = this.config.stages === undefined && (this.options.stage || defaultStage) == defaultStage;
-    const includedInStages = this.config.stages && this.config.stages.includes(this.options.stage);
+    //   (1) the serverless stage (explicitly defined or default stage "dev") is included in the `stages` config; or
+    //   (2) serverless is invoked without a --stage flag (default stage "dev") and no `stages` config is provided
+    const effectiveStage = this.options.stage || defaultStage;
+    const noStageUsed = this.config.stages === undefined && effectiveStage == defaultStage;
+    const includedInStages = this.config.stages && this.config.stages.includes(effectiveStage);
     return noStageUsed || includedInStages;
   }
 

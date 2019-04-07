@@ -83,8 +83,8 @@ custom:
 ### Activating the plugin for certain stages
 
 Note the `stages` attribute in the config above. The `serverless-localstack` plugin gets activated if either:
-  1. `serverless` is invoked with the default stage ("dev") and no `stages` config is provided; or
-  2. `serverless` is invoked with a `--stage` flag and this stage is included in the `stages` config
+  1. the serverless stage (explicitly defined or default stage "dev") is included in the `stages` config; or
+  2. serverless is invoked without a `--stage` flag (default stage "dev") and no `stages` config is provided
 
 ### Mounting Lambda code for better performance
 
@@ -170,6 +170,7 @@ custom:
 
 ## Change Log
 
+* v0.4.12: Fix Lambda packaging for `mountCode:false`
 * v0.4.11: Add polling loop for starting LocalStack in Docker
 * v0.4.8: Auto-create deployment bucket; autostart LocalStack in Docker
 * v0.4.7: Set S3 path addressing; add eslint to CI config
