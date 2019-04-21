@@ -225,14 +225,6 @@ class LocalstackPlugin {
   }
 
   /**
-   * Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
-   */
-  configureAWSCredentials() {
-    process.env.AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || 'test';
-    process.env.AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || 'test';
-  }
-
-  /**
    * Create custom Serverless deployment bucket, if one is configured.
    */
   createDeploymentBucket() {
@@ -261,8 +253,13 @@ class LocalstackPlugin {
       const host = this.config.host;
       const configChanges = {};
 
-      // make sure we have AWS credentials configured
-      this.configureAWSCredentials();
+      // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
+      if (!process.env.AWS_SECRET_ACCESS_KEY){
+        const accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'test';
+        const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'test';
+        const fakeCredentials = new AWS.Credentials({accessKeyId, secretAccessKey})
+        configChanges.credentials = fakeCredentials;
+      }
 
       // If a host has been configured, override each service
       if (host) {
