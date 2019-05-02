@@ -22,9 +22,7 @@ class LocalstackPlugin {
     this.commands = {
       deploy: {lifecycleEvents: ['resources']}
     };
-    this.hooks = {
-      'before:deploy:resources': this.beforeDeploy.bind(this)
-    };
+    this.hooks = {};
     this.AWS_SERVICES = {
       'apigateway': 4567,
       'cloudformation': 4581,
@@ -48,6 +46,8 @@ class LocalstackPlugin {
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
     this.awsProvider.request = this.interceptRequest.bind(this);
+    this.enablePlugin();
+
 
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService')
