@@ -16,6 +16,8 @@ class LocalstackPlugin {
     this.readConfig();
 
     if (!this.isActive()) {
+      this.log("serverless-localstack plugin not activated. '"
+        + (this.options.stage || defaultStage) + "' is not present in config custom.localstack.stages");
       return;
     }
 
