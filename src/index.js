@@ -48,7 +48,6 @@ class LocalstackPlugin {
     this.awsProvider.request = this.interceptRequest.bind(this);
     this.enablePlugin();
 
-
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService')
     function compileFunction(functionName) {
