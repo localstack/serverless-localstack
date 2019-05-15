@@ -6,6 +6,8 @@ const exec = promisify(require('child_process').exec);
 
 // Default stage used by Serverless
 const defaultStage = 'dev';
+// Strings or other values considered to represent "true"
+const trueValues = ['1', 'true', true];
 
 
 class LocalstackPlugin {
@@ -25,7 +27,7 @@ class LocalstackPlugin {
       deploy: {lifecycleEvents: ['resources']}
     };
     this.hooks = {};
-    this.AWS_SERVICES = {
+    this.awsServices = {
       'apigateway': 4567,
       'cloudformation': 4581,
       'cloudwatch': 4582,
@@ -41,7 +43,8 @@ class LocalstackPlugin {
       'sns': 4575,
       'sqs': 4576,
       'sts': 4592,
-      'iam': 4593
+      'iam': 4593,
+      'ssm': 4583
     };
 
     // Intercept Provider requests
@@ -95,7 +98,11 @@ class LocalstackPlugin {
     // reconfigure AWS endpoints based on current stage variables
     this.getStageVariable();
     return this.startLocalStack().then(
-      () => this.reconfigureAWS()
+      () => {
+          this.reconfigureAWS();
+          this.patchServerlessSecrets();
+          this.patchS3BucketLocationResponse();
+      }
     );
   }
 
@@ -215,7 +222,7 @@ class LocalstackPlugin {
         env.DEBUG = '1';
         env.LAMBDA_EXECUTOR = 'docker';
         env.LAMBDA_REMOTE_DOCKER = '0';
-        env.DOCKER_FLAGS = `-d -v ${pwd}:${pwd}`;
+        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${pwd}:${pwd}`;
         env.START_WEB = '0';
         const options = {env: env};
         return exec('localstack infra start --docker', options).then(getContainer)
@@ -246,6 +253,40 @@ class LocalstackPlugin {
   }
 
   /**
+   * Patch S3 getBucketLocation invocation responses to return a
+   * valid response ("us-east-1") instead of the default value "localhost".
+   */
+  patchS3BucketLocationResponse() {
+    const providerRequest = (service, method, params) => {
+      const result = providerRequestOrig(service, method, params);
+      if (service === 'S3' && method === 'getBucketLocation') {
+        return result.then((res) => {
+          if (res.LocationConstraint === 'localhost') {
+            res.LocationConstraint = 'us-east-1';
+          }
+          return Promise.resolve(res);
+        })
+      }
+      return result;
+    };
+    const providerRequestOrig = this.awsProvider.request;
+    this.awsProvider.request = providerRequest;
+  }
+
+  /**
+   * Patch the "serverless-secrets" plugin (if enabled) to use the local SSM service endpoint
+   */
+  patchServerlessSecrets() {
+    const slsSecretsAWS = this.findPlugin('ServerlessSecrets');
+    if (slsSecretsAWS) {
+      slsSecretsAWS.config.options.providerOptions = slsSecretsAWS.config.options.providerOptions || {};
+      slsSecretsAWS.config.options.providerOptions.endpoint = this.getServiceURL('ssm');
+      slsSecretsAWS.config.options.providerOptions.accessKeyId = 'test';
+      slsSecretsAWS.config.options.providerOptions.secretAccessKey = 'test';
+    }
+  }
+
+  /**
    * Patch the AWS client library to use our local endpoint URLs.
    */
   reconfigureAWS() {
@@ -264,9 +305,9 @@ class LocalstackPlugin {
 
       // If a host has been configured, override each service
       if (host) {
-        for (const service of Object.keys(this.AWS_SERVICES)) {
+        for (const service of Object.keys(this.awsServices)) {
           const serviceLower = service.toLowerCase();
-          const port = this.AWS_SERVICES[service];
+          const port = this.awsServices[service];
           const url = `${host}:${port}`;
 
           this.debug(`Reconfiguring service ${service} to use ${url}`);
@@ -344,6 +385,11 @@ class LocalstackPlugin {
   }
 
   /** Utility functions below **/
+
+  getServiceURL(serviceName) {
+    const proto = trueValues.includes(process.env.USE_SSL) ? 'https' : 'http';
+    return `${proto}://localhost:${this.awsServices[serviceName]}`;
+  }
 
   log(msg) {
     this.serverless.cli.log.call(this.serverless.cli, msg);
