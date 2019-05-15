@@ -27,6 +27,13 @@ class LocalstackPlugin {
       deploy: {lifecycleEvents: ['resources']}
     };
     this.hooks = {};
+    // Define a before-hook for all event types
+    for (let event in this.serverless.pluginManager.hooks) {
+      if (event.startsWith('before:')) {
+        this.hooks[event] = this.beforeEventHook.bind(this, event);
+      }
+    }
+
     this.awsServices = {
       'apigateway': 4567,
       'cloudformation': 4581,
@@ -51,7 +58,6 @@ class LocalstackPlugin {
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
     this.awsProvider.request = this.interceptRequest.bind(this);
-    this.enablePlugin();
 
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService')
@@ -86,7 +92,7 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
   }
 
-  beforeDeploy() {
+  beforeEventHook() {
     if (this.pluginEnabled) {
       return Promise.resolve();
     }
@@ -217,12 +223,12 @@ class LocalstackPlugin {
           return;
         }
         this.log('Starting LocalStack in Docker. This can take a while.');
-        const pwd = process.cwd();
+        const cwd = process.cwd();
         const env = this.clone(process.env);
         env.DEBUG = '1';
         env.LAMBDA_EXECUTOR = 'docker';
         env.LAMBDA_REMOTE_DOCKER = '0';
-        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${pwd}:${pwd}`;
+        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
         env.START_WEB = '0';
         const options = {env: env};
         return exec('localstack infra start --docker', options).then(getContainer)
