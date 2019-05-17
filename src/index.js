@@ -29,7 +29,7 @@ class LocalstackPlugin {
     this.hooks = {};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
-      if (event.startsWith('before:')) {
+      if ((event.startsWith('before:') || event.startsWith('aws:common:validate')) && !this.hooks[event]) {
         this.hooks[event] = this.beforeEventHook.bind(this, event);
       }
     }
