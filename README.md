@@ -170,6 +170,7 @@ custom:
 
 ## Change Log
 
+* v0.4.15: Enable plugin on aws:common:validate events
 * v0.4.14: Initialize LocalStack using hooks for each "before:" event
 * v0.4.13: Add endpoint for SSM; patch serverless-secrets plugin; allow customizing $DOCKER_FLAGS
 * v0.4.12: Fix Lambda packaging for `mountCode:false`
