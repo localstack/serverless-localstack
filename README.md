@@ -75,6 +75,9 @@ custom:
     lambda:
       # Enable this flag to improve performance
       mountCode: True
+    docker:
+      # Enable this flag to run "docker ..." commands as sudo
+      sudo: False
   stages:
     local:
       ...
@@ -170,6 +173,7 @@ custom:
 
 ## Change Log
 
+* v0.4.16: Add option for running Docker as sudo; add fix for downloadPackageArtifacts
 * v0.4.15: Enable plugin on aws:common:validate events
 * v0.4.14: Initialize LocalStack using hooks for each "before:" event
 * v0.4.13: Add endpoint for SSM; patch serverless-secrets plugin; allow customizing $DOCKER_FLAGS
