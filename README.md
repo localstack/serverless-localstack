@@ -75,6 +75,9 @@ custom:
     lambda:
       # Enable this flag to improve performance
       mountCode: True
+    docker:
+      # Enable this flag to run "docker ..." commands as sudo
+      sudo: False
   stages:
     local:
       ...

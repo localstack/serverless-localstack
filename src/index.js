@@ -88,6 +88,7 @@ class LocalstackPlugin {
       });
     }
     this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction);
+    this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
   }
@@ -120,6 +121,10 @@ class LocalstackPlugin {
     const plugin = this.findPlugin(pluginName);
     if (!plugin) {
       this.log('Warning: Unable to find plugin named: ' + pluginName)
+      return;
+    }
+    if (!plugin[functionName]) {
+      this.log(`Unable to find function ${functionName} on plugin ${pluginName}`)
       return;
     }
     const functionOriginal = plugin[functionName].bind(plugin);
@@ -165,7 +170,11 @@ class LocalstackPlugin {
   }
 
   shouldMountCode() {
-    return (this.config.lambda || {}).mountCode
+    return (this.config.lambda || {}).mountCode;
+  }
+
+  shouldRunDockerSudo() {
+    return (this.config.docker || {}).sudo;
   }
 
   getStageVariable() {
@@ -230,6 +239,9 @@ class LocalstackPlugin {
         env.LAMBDA_REMOTE_DOCKER = '0';
         env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
         env.START_WEB = '0';
+        if (this.shouldRunDockerSudo()) {
+          env.DOCKER_CMD = 'sudo docker';
+        }
         const options = {env: env};
         return exec('localstack infra start --docker', options).then(getContainer)
           .then((containerID) => checkStatus(containerID)
