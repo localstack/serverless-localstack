@@ -238,7 +238,7 @@ class LocalstackPlugin {
         env.LAMBDA_EXECUTOR = 'docker';
         env.LAMBDA_REMOTE_DOCKER = '0';
         env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
-        env.START_WEB = '0';
+        env.START_WEB = env.START_WEB || '0';
         if (this.shouldRunDockerSudo()) {
           env.DOCKER_CMD = 'sudo docker';
         }
