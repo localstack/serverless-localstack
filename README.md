@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/localstack/serverless-localstack.svg)](https://travis-ci.org/localstack/serverless-localstack)
+[![Build Status](https://travis-ci.org/localstack/serverless-localstack.svg?branch=master)](https://travis-ci.org/localstack/serverless-localstack)
 
 # LocalStack Serverless Plugin
 
