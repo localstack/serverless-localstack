@@ -51,13 +51,20 @@ class LocalstackPlugin {
       'sqs': 4576,
       'sts': 4592,
       'iam': 4593,
-      'ssm': 4583
+      'ssm': 4583,
+      'rds': 4594,
+      'elasticache': 4598,
+      'secretsmanager': 4584,
+      'logs': 4584
     };
 
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
     this.awsProvider.request = this.interceptRequest.bind(this);
+
+    // Reconfigure AWS clients
+    this.reconfigureAWS();
 
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService')
