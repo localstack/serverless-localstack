@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "0.4.17",
+  "version": "0.4.18",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -45,6 +45,8 @@
     "serverless": "^1.37.1",
     "sinon": "^6.2.0",
     "tempy": "^0.2.1",
-    "eslint": "^5.5.0"
+    "eslint": "^5.5.0",
+    "lodash": ">=4.17.13",
+    "js-yaml": ">=3.13.1"
   }
 }
