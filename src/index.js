@@ -29,10 +29,14 @@ class LocalstackPlugin {
     this.hooks = {};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
-      if ((event.startsWith('before:') || event.startsWith('aws:common:validate')) && !this.hooks[event]) {
+      const doAdd = event.startsWith('before:') || event.startsWith('aws:common:validate');
+      if (doAdd && !this.hooks[event]) {
         this.hooks[event] = this.beforeEventHook.bind(this, event);
       }
     }
+    // Define a hook for aws:info to fix output data
+    this.hooks['aws:info:gatherData'] = this.fixOutputEndpoints.bind(this);
+
 
     this.awsServices = {
       'apigateway': 4567,
@@ -55,7 +59,8 @@ class LocalstackPlugin {
       'rds': 4594,
       'elasticache': 4598,
       'secretsmanager': 4584,
-      'logs': 4584
+      'logs': 4586,
+      'cloudwatchlogs': 4586
     };
 
     // Intercept Provider requests
@@ -113,7 +118,6 @@ class LocalstackPlugin {
     this.getStageVariable();
     return this.startLocalStack().then(
       () => {
-          this.reconfigureAWS();
           this.patchServerlessSecrets();
           this.patchS3BucketLocationResponse();
       }
@@ -192,6 +196,16 @@ class LocalstackPlugin {
     this.debug('config.stage: ' + this.config.stage);
   }
 
+  fixOutputEndpoints() {
+    const plugin = this.findPlugin('AwsInfo');
+    const endpoints = plugin.gatheredData.info.endpoints || [];
+    endpoints.forEach((entry, idx) => {
+      const regex = /.*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
+      const replace = 'http://localhost:' + this.awsServices.apigateway + '/restapis/$1/$2/_user_request_$3';
+      endpoints[idx] = entry.replace(regex, replace);
+    });
+  }
+
   /**
    * Start the LocalStack container in Docker, if it is not running yet.
    */
@@ -260,6 +274,7 @@ class LocalstackPlugin {
   /**
    * Create custom Serverless deployment bucket, if one is configured.
    */
+   // TODO deprecated - should be removed
   createDeploymentBucket() {
     const bucketName = this.serverless.service.provider.deploymentBucket;
     if (!bucketName) {
@@ -317,7 +332,7 @@ class LocalstackPlugin {
   reconfigureAWS() {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
-      const host = this.config.host;
+      const host = this.config.host || 'http://localhost';
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
@@ -329,18 +344,16 @@ class LocalstackPlugin {
       }
 
       // If a host has been configured, override each service
-      if (host) {
-        for (const service of Object.keys(this.awsServices)) {
-          const serviceLower = service.toLowerCase();
-          const port = this.awsServices[service];
-          const url = `${host}:${port}`;
+      for (const service of Object.keys(this.awsServices)) {
+        const serviceLower = service.toLowerCase();
+        const port = this.awsServices[service];
+        const url = `${host}:${port}`;
 
-          this.debug(`Reconfiguring service ${service} to use ${url}`);
-          configChanges[serviceLower] = { endpoint: url };
+        this.debug(`Reconfiguring service ${service} to use ${url}`);
+        configChanges[serviceLower] = { endpoint: url };
 
-          if (serviceLower == 's3') {
-            configChanges[serviceLower].s3ForcePathStyle = true;
-          }
+        if (serviceLower == 's3') {
+          configChanges[serviceLower].s3ForcePathStyle = true;
         }
       }
 
@@ -360,7 +373,8 @@ class LocalstackPlugin {
       this.awsProvider.sdk.config.update(configChanges);
 
       // make sure the deployment bucket exists in the local environment
-      return this.createDeploymentBucket();
+      // TODO remove
+      // return this.createDeploymentBucket();
     }
     else {
       this.endpoints = {}

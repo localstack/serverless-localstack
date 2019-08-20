@@ -56,10 +56,10 @@ plugins:
 
 custom:
   localstack:
-    host: http://localhost
     stages:
       # list of stages for which the plugin should be enabled
       - local
+    host: http://localhost  # optional - LocalStack host to connect to
     autostart: true  # optional - start LocalStack in Docker on Serverless deploy
     endpoints:
       # This section is optional - can be used for customizing the target endpoints
@@ -173,6 +173,8 @@ custom:
 
 ## Change Log
 
+* v0.4.18: Fix output of API Gateway endpoints; add port mappings; fix config init code
+* v0.4.17: Enable configuration of `$START_WEB`
 * v0.4.16: Add option for running Docker as sudo; add fix for downloadPackageArtifacts
 * v0.4.15: Enable plugin on aws:common:validate events
 * v0.4.14: Initialize LocalStack using hooks for each "before:" event
