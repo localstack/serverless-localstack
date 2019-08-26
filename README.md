@@ -173,6 +173,7 @@ custom:
 
 ## Change Log
 
+* v0.4.19: Fix populating local test credentials in AWS provider
 * v0.4.18: Fix output of API Gateway endpoints; add port mappings; fix config init code
 * v0.4.17: Enable configuration of `$START_WEB`
 * v0.4.16: Add option for running Docker as sudo; add fix for downloadPackageArtifacts

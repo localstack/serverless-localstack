@@ -336,11 +336,18 @@ class LocalstackPlugin {
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
-      if (!process.env.AWS_SECRET_ACCESS_KEY){
+      const tmpCreds = this.awsProvider.getCredentials();
+      if (!tmpCreds.credentials){
         const accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'test';
         const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'test';
-        const fakeCredentials = new AWS.Credentials({accessKeyId, secretAccessKey})
+        const fakeCredentials = new AWS.Credentials({accessKeyId, secretAccessKey});
         configChanges.credentials = fakeCredentials;
+        // set environment variables, ...
+        process.env.AWS_ACCESS_KEY_ID = accessKeyId;
+        process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
+        // ..., then populate cache with new credentials
+        this.awsProvider.cachedCredentials = null;
+        this.awsProvider.getCredentials();
       }
 
       // If a host has been configured, override each service
@@ -371,10 +378,6 @@ class LocalstackPlugin {
 
       // update SDK with overridden configs
       this.awsProvider.sdk.config.update(configChanges);
-
-      // make sure the deployment bucket exists in the local environment
-      // TODO remove
-      // return this.createDeploymentBucket();
     }
     else {
       this.endpoints = {}
