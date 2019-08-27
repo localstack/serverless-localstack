@@ -56,22 +56,7 @@ class LocalstackPlugin {
 
   }
 
-  beforeEventHook() {
-    this.readConfig();
-    if (!this.isActive()) {
-      return Promise.resolve();
-    }
-    if (this.pluginEnabled) {
-      return Promise.resolve();
-    }
-    this.pluginEnabled = true;
-    return this.enablePlugin();
-  }
-
-  enablePlugin() {
-    // reconfigure AWS endpoints based on current stage variables
-    this.getStageVariable();
-
+  activatePlugin() {
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
@@ -112,6 +97,24 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
+  }
+
+  beforeEventHook() {
+    this.readConfig();
+    if (!this.isActive()) {
+      return Promise.resolve();
+    }
+    this.activatePlugin();
+    if (this.pluginEnabled) {
+      return Promise.resolve();
+    }
+    this.pluginEnabled = true;
+    return this.enablePlugin();
+  }
+
+  enablePlugin() {
+    // reconfigure AWS endpoints based on current stage variables
+    this.getStageVariable();
 
     return this.startLocalStack().then(
       () => {
