@@ -15,14 +15,6 @@ class LocalstackPlugin {
     this.serverless = serverless;
     this.options = options;
 
-    this.readConfig();
-
-    if (!this.isActive()) {
-      this.log("serverless-localstack plugin not activated. '"
-        + (this.options.stage || defaultStage) + "' is not present in config custom.localstack.stages");
-      return;
-    }
-
     this.commands = {
       deploy: {lifecycleEvents: ['resources']}
     };
@@ -36,7 +28,6 @@ class LocalstackPlugin {
     }
     // Define a hook for aws:info to fix output data
     this.hooks['aws:info:gatherData'] = this.fixOutputEndpoints.bind(this);
-
 
     this.awsServices = {
       'apigateway': 4567,
@@ -62,6 +53,24 @@ class LocalstackPlugin {
       'logs': 4586,
       'cloudwatchlogs': 4586
     };
+
+  }
+
+  beforeEventHook() {
+    this.readConfig();
+    if (!this.isActive()) {
+      return Promise.resolve();
+    }
+    if (this.pluginEnabled) {
+      return Promise.resolve();
+    }
+    this.pluginEnabled = true;
+    return this.enablePlugin();
+  }
+
+  enablePlugin() {
+    // reconfigure AWS endpoints based on current stage variables
+    this.getStageVariable();
 
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
@@ -103,19 +112,7 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
-  }
 
-  beforeEventHook() {
-    if (this.pluginEnabled) {
-      return Promise.resolve();
-    }
-    this.pluginEnabled = true;
-    return this.enablePlugin();
-  }
-
-  enablePlugin() {
-    // reconfigure AWS endpoints based on current stage variables
-    this.getStageVariable();
     return this.startLocalStack().then(
       () => {
           this.patchServerlessSecrets();
@@ -155,7 +152,7 @@ class LocalstackPlugin {
 
   readConfig() {
     this.config = (this.serverless.service.custom || {}).localstack || {};
-    Object.assign(this.config, this.options);
+    Object.assign({}, this.options, this.config);
 
     //Get the target deployment stage
     this.config.stage = "";
