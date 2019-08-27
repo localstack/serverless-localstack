@@ -100,14 +100,16 @@ class LocalstackPlugin {
   }
 
   beforeEventHook() {
+    if (this.pluginEnabled) {
+      return Promise.resolve();
+    }
+
     this.readConfig();
     if (!this.isActive()) {
       return Promise.resolve();
     }
     this.activatePlugin();
-    if (this.pluginEnabled) {
-      return Promise.resolve();
-    }
+
     this.pluginEnabled = true;
     return this.enablePlugin();
   }
