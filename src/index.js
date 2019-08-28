@@ -156,8 +156,8 @@ class LocalstackPlugin {
   }
 
   readConfig() {
-    this.config = (this.serverless.service.custom || {}).localstack || {};
-    Object.assign({}, this.options, this.config);
+    const localstackConfig = (this.serverless.service.custom || {}).localstack || {};
+    this.config = Object.assign({}, this.options, localstackConfig);
 
     //Get the target deployment stage
     this.config.stage = "";
