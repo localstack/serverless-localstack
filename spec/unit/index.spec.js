@@ -51,6 +51,7 @@ describe("LocalstackPlugin", () => {
 
   let simulateBeforeDeployHooks = function(instance){
     instance.readConfig();
+    instance.activatePlugin();
     instance.getStageVariable()
     instance.reconfigureAWS()
   }
@@ -181,6 +182,8 @@ describe("LocalstackPlugin", () => {
     it('should not send validateTemplate calls to localstack', () => {
       const request = sinon.stub(awsProvider, 'request');
       instance = new LocalstackPlugin(serverless, defaultPluginState)
+      simulateBeforeDeployHooks(instance);
+
       awsProvider.request('S3', 'validateTemplate', {});
 
       expect(request.called).to.be.false;
