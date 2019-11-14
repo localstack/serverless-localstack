@@ -258,8 +258,8 @@ class LocalstackPlugin {
         const cwd = process.cwd();
         const env = this.clone(process.env);
         env.DEBUG = '1';
-        env.LAMBDA_EXECUTOR = 'docker';
-        env.LAMBDA_REMOTE_DOCKER = '0';
+        env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
+        env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
         env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
         env.START_WEB = env.START_WEB || '0';
         if (this.shouldRunDockerSudo()) {
