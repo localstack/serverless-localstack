@@ -105,6 +105,10 @@ it, and finally copying/mounting it into a Docker container to run the Lambda.
    Windows host where the `-v <local_dir>:<cont_dir>` flag to `docker run` requires us
    to specify a `local_dir` relative to the Windows host file system that is mounted
    into the VM (e.g., `"c:/users/guest/..."`).
+* `LAMBDA_EXECUTOR`: Executor type to use for running Lambda functions (default `docker`) -
+   see [LocalStack repo](https://github.com/localstack/localstack)
+* `LAMBDA_REMOTE_DOCKER`: Whether to assume that we're running Lambda containers against
+   a remote Docker daemon (default `false`) - see [LocalStack repo](https://github.com/localstack/localstack)
 
 ### Configuring endpoints via JSON
 
@@ -173,6 +177,7 @@ custom:
 
 ## Change Log
 
+* v0.4.20: Use `LAMBDA_EXECUTOR`/`LAMBDA_REMOTE_DOCKER` configurations from environment
 * v0.4.19: Fix populating local test credentials in AWS provider
 * v0.4.18: Fix output of API Gateway endpoints; add port mappings; fix config init code
 * v0.4.17: Enable configuration of `$START_WEB`
