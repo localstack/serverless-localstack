@@ -48,10 +48,21 @@ class LocalstackPlugin {
       'iam': 4593,
       'ssm': 4583,
       'rds': 4594,
+      'ec2': 4597,
       'elasticache': 4598,
+      'kms': 4599,
       'secretsmanager': 4584,
       'logs': 4586,
-      'cloudwatchlogs': 4586
+      'cloudwatchlogs': 4586,
+      'iot': 4589,
+      'cognito-idp': 4590,
+      'cognito-identity': 4591,
+      'ecs': 4601,
+      'eks': 4602,
+      'xray': 4603,
+      'appsync': 4605,
+      'cloudfront': 4606,
+      'athena': 4607
     };
 
   }
