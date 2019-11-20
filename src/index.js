@@ -5,10 +5,11 @@ const {promisify} = require('es6-promisify');
 const exec = promisify(require('child_process').exec);
 
 // Default stage used by Serverless
-const defaultStage = 'dev';
+const DEFAULT_STAGE = 'dev';
 // Strings or other values considered to represent "true"
-const trueValues = ['1', 'true', true];
-
+const TRUE_VALUES = ['1', 'true', true];
+// Build directory of serverless-plugin-typescript plugin
+const TYPESCRIPT_PLUGIN_BUILD_DIR = '.build';
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -21,13 +22,19 @@ class LocalstackPlugin {
     this.hooks = {};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
-      const doAdd = event.startsWith('before:') || event.startsWith('aws:common:validate');
+      const doAdd = event.startsWith('before:');
       if (doAdd && !this.hooks[event]) {
-        this.hooks[event] = this.beforeEventHook.bind(this, event);
+        this.hooks[event] = this.beforeEventHook.bind(this);
       }
     }
     // Define a hook for aws:info to fix output data
     this.hooks['aws:info:gatherData'] = this.fixOutputEndpoints.bind(this);
+
+    // Define a hook for deploy:deploy to fix handler location for mounted lambda
+    this.addHookInFirstPosition('deploy:deploy', this.patchTypeScriptPluginMountedCodeLocation);
+
+    // Add a before hook for aws:common:validate and make sure it is in the very first position
+    this.addHookInFirstPosition('before:aws:common:validate:validate', this.beforeEventHook);
 
     this.awsServices = {
       'apigateway': 4567,
@@ -64,7 +71,12 @@ class LocalstackPlugin {
       'cloudfront': 4606,
       'athena': 4607
     };
+  }
 
+  addHookInFirstPosition(eventName, hookFunction) {
+    this.serverless.pluginManager.hooks[eventName] = this.serverless.pluginManager.hooks[eventName] || [];
+    this.serverless.pluginManager.hooks[eventName].unshift(
+      { pluginName: 'LocalstackPlugin', hook: hookFunction.bind(this, eventName) });
   }
 
   activatePlugin() {
@@ -108,6 +120,8 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
+    this.skipIfMountLambda('TypeScriptPlugin', 'cleanup', null, [
+      'after:package:createDeploymentArtifacts', 'after:deploy:function:packageFunction']);
   }
 
   beforeEventHook() {
@@ -141,7 +155,7 @@ class LocalstackPlugin {
     return this.serverless.pluginManager.plugins.find(p => p.constructor.name === name);
   }
 
-  skipIfMountLambda(pluginName, functionName, overrideFunction) {
+  skipIfMountLambda(pluginName, functionName, overrideFunction, hookNames) {
     const plugin = this.findPlugin(pluginName);
     if (!plugin) {
       this.log('Warning: Unable to find plugin named: ' + pluginName)
@@ -161,9 +175,26 @@ class LocalstackPlugin {
       }
       return functionOriginal.apply(null, arguments);
     }
+
     overrideFunction = overrideFunction || overrideFunctionDefault;
     overrideFunction._functionOriginal = functionOriginal;
-    plugin[functionName] = overrideFunction.bind(this);
+    const boundOverrideFunction = overrideFunction.bind(this);
+    plugin[functionName] = boundOverrideFunction;
+
+    // overwrite bound functions for specified hook names
+    (hookNames || []).forEach(
+      (hookName) => {
+        plugin.hooks[hookName] = boundOverrideFunction;
+        const slsHooks = this.serverless.pluginManager.hooks[hookName] || [];
+        slsHooks.forEach(
+          (hookItem) => {
+            if (hookItem.pluginName === pluginName) {
+              hookItem.hook = boundOverrideFunction;
+            }
+          }
+        );
+      }
+    );
   }
 
   readConfig() {
@@ -187,8 +218,8 @@ class LocalstackPlugin {
     // Activate the plugin if either:
     //   (1) the serverless stage (explicitly defined or default stage "dev") is included in the `stages` config; or
     //   (2) serverless is invoked without a --stage flag (default stage "dev") and no `stages` config is provided
-    const effectiveStage = this.options.stage || defaultStage;
-    const noStageUsed = this.config.stages === undefined && effectiveStage == defaultStage;
+    const effectiveStage = this.options.stage || DEFAULT_STAGE;
+    const noStageUsed = this.config.stages === undefined && effectiveStage == DEFAULT_STAGE;
     const includedInStages = this.config.stages && this.config.stages.includes(effectiveStage);
     return noStageUsed || includedInStages;
   }
@@ -285,21 +316,20 @@ class LocalstackPlugin {
   }
 
   /**
-   * Create custom Serverless deployment bucket, if one is configured.
+   * Patch code location in case (1) serverless-plugin-typescript is
+   * used, and (2) lambda.mountCode is enabled.
    */
-   // TODO deprecated - should be removed
-  createDeploymentBucket() {
-    const bucketName = this.serverless.service.provider.deploymentBucket;
-    if (!bucketName) {
-      return Promise.resolve();
+  patchTypeScriptPluginMountedCodeLocation() {
+    if (!this.shouldMountCode()) {
+      return;
     }
-    const params = {};
-    return this.awsProviderRequest('S3', 'listBuckets', params).then(
-      (result) => {
-        const found = result.Buckets.filter((b) => b.Name == bucketName);
-        if (!found.length) {
-          this.log('Creating deployment bucket ' + bucketName);
-          return this.awsProviderRequest('S3', 'createBucket', {'Bucket': bucketName});
+    const template = this.serverless.service.provider.compiledCloudFormationTemplate || {};
+    const resources = template.Resources || {};
+    Object.keys(resources).forEach(
+      (resName) => {
+        const resEntry = resources[resName];
+        if (resEntry.Type === 'AWS::Lambda::Function') {
+          resEntry.Properties.Handler = `${TYPESCRIPT_PLUGIN_BUILD_DIR}/${resEntry.Properties.Handler}`;
         }
       }
     );
@@ -442,7 +472,7 @@ class LocalstackPlugin {
   /** Utility functions below **/
 
   getServiceURL(serviceName) {
-    const proto = trueValues.includes(process.env.USE_SSL) ? 'https' : 'http';
+    const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
     return `${proto}://localhost:${this.awsServices[serviceName]}`;
   }
 
