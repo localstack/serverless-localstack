@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
