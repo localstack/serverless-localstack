@@ -241,6 +241,9 @@ class LocalstackPlugin {
   }
 
   fixOutputEndpoints() {
+    if(!this.isActive()) {
+      return;
+    }
     const plugin = this.findPlugin('AwsInfo');
     const endpoints = plugin.gatheredData.info.endpoints || [];
     endpoints.forEach((entry, idx) => {
