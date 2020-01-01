@@ -13,6 +13,7 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR = '.build';
 
 class LocalstackPlugin {
   constructor(serverless, options) {
+
     this.serverless = serverless;
     this.options = options;
 
@@ -71,6 +72,10 @@ class LocalstackPlugin {
       'cloudfront': 4606,
       'athena': 4607
     };
+
+    // Activate the synchronous parts of plugin config here in the constructor, but
+    // run the async logic in enablePlugin(..) later via the hooks.
+    this.activatePlugin();
   }
 
   addHookInFirstPosition(eventName, hookFunction) {
@@ -80,6 +85,12 @@ class LocalstackPlugin {
   }
 
   activatePlugin() {
+    this.readConfig();
+
+    if (this.pluginActivated || !this.isActive()) {
+      return Promise.resolve();
+    }
+
     // Intercept Provider requests
     this.awsProvider = this.serverless.getProvider('aws');
     this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
@@ -122,6 +133,8 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
     this.skipIfMountLambda('TypeScriptPlugin', 'cleanup', null, [
       'after:package:createDeploymentArtifacts', 'after:deploy:function:packageFunction']);
+
+    this.pluginActivated = true;
   }
 
   beforeEventHook() {
@@ -129,10 +142,6 @@ class LocalstackPlugin {
       return Promise.resolve();
     }
 
-    this.readConfig();
-    if (!this.isActive()) {
-      return Promise.resolve();
-    }
     this.activatePlugin();
 
     this.pluginEnabled = true;
@@ -198,6 +207,10 @@ class LocalstackPlugin {
   }
 
   readConfig() {
+    if (this.configInitialized) {
+      return;
+    }
+
     const localstackConfig = (this.serverless.service.custom || {}).localstack || {};
     this.config = Object.assign({}, this.options, localstackConfig);
 
@@ -212,6 +225,11 @@ class LocalstackPlugin {
     if (this.endpointFile) {
       this.loadEndpointsFromDisk(this.endpointFile);
     }
+
+    // read current stage variable - to determine whether to reconfigure AWS endpoints
+    this.getStageVariable();
+
+    this.configInitialized = true;
   }
 
   isActive() {

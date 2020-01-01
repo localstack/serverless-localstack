@@ -12,5 +12,5 @@ script:
   - npm run test
   # setup links for integration testing
   - npm link
-  # Kick off integration test
+  # kick off integration test
   - sleep 5; SLS_DEBUG=1 npm run test:integration

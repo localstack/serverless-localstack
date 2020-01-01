@@ -8,11 +8,11 @@ describe('LocalstackPlugin', () => {
 
   beforeEach( () => {
     this.service = services.createService({});
-  })
+  });
 
   afterEach( () => {
     services.removeService(this.service);
-  })
+  });
 
   it('should deploy a stack', () => {
     services.deployService(this.service);

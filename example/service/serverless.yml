@@ -15,5 +15,8 @@ custom:
 functions:
   hello:
     handler: handler.hello
+    environment:
+      SSM_VAR: ${ssm:abc}
+      # CF_VAR: ${cf:def}
     events:
       - sns: ${env:EXISTING_TOPIC_ARN}
