@@ -71,6 +71,5 @@ exports.deployService = (dir) => {
 }
 
 exports.removeService = (dir) => {
-  // execServerless('remove', dir);
   rimraf.sync(dir)
 }
