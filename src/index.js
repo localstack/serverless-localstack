@@ -75,7 +75,7 @@ class LocalstackPlugin {
 
     // Activate the synchronous parts of plugin config here in the constructor, but
     // run the async logic in enablePlugin(..) later via the hooks.
-    this.activatePlugin();
+    this.activatePlugin(true);
   }
 
   addHookInFirstPosition(eventName, hookFunction) {
@@ -84,17 +84,17 @@ class LocalstackPlugin {
       { pluginName: 'LocalstackPlugin', hook: hookFunction.bind(this, eventName) });
   }
 
-  activatePlugin() {
-    this.readConfig();
+  activatePlugin(preHooks) {
+    this.readConfig(preHooks);
 
     if (this.pluginActivated || !this.isActive()) {
       return Promise.resolve();
     }
 
     // Intercept Provider requests
-    this.awsProvider = this.serverless.getProvider('aws');
-    this.awsProviderRequest = this.awsProvider.request.bind(this.awsProvider);
-    this.awsProvider.request = this.interceptRequest.bind(this);
+    const awsProvider = this.getAwsProvider();
+    this.awsProviderRequest = awsProvider.request.bind(awsProvider);
+    awsProvider.request = this.interceptRequest.bind(this);
 
     // Reconfigure AWS clients
     this.reconfigureAWS();
@@ -206,7 +206,7 @@ class LocalstackPlugin {
     );
   }
 
-  readConfig() {
+  readConfig(preHooks) {
     if (this.configInitialized) {
       return;
     }
@@ -229,7 +229,7 @@ class LocalstackPlugin {
     // read current stage variable - to determine whether to reconfigure AWS endpoints
     this.getStageVariable();
 
-    this.configInitialized = true;
+    this.configInitialized = this.configInitialized || !preHooks;
   }
 
   isActive() {
@@ -373,8 +373,9 @@ class LocalstackPlugin {
       }
       return result;
     };
-    const providerRequestOrig = this.awsProvider.request;
-    this.awsProvider.request = providerRequest;
+    const awsProvider = this.getAwsProvider();
+    const providerRequestOrig = awsProvider.request;
+    awsProvider.request = providerRequest;
   }
 
   /**
@@ -400,7 +401,8 @@ class LocalstackPlugin {
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
-      const tmpCreds = this.awsProvider.getCredentials();
+      const awsProvider = this.getAwsProvider();
+      const tmpCreds = awsProvider.getCredentials();
       if (!tmpCreds.credentials){
         const accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'test';
         const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'test';
@@ -410,8 +412,8 @@ class LocalstackPlugin {
         process.env.AWS_ACCESS_KEY_ID = accessKeyId;
         process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
         // ..., then populate cache with new credentials
-        this.awsProvider.cachedCredentials = null;
-        this.awsProvider.getCredentials();
+        awsProvider.cachedCredentials = null;
+        awsProvider.getCredentials();
       }
 
       // If a host has been configured, override each service
@@ -441,7 +443,7 @@ class LocalstackPlugin {
       }
 
       // update SDK with overridden configs
-      this.awsProvider.sdk.config.update(configChanges);
+      this.getAwsProvider().sdk.config.update(configChanges);
     }
     else {
       this.endpoints = {}
@@ -491,6 +493,11 @@ class LocalstackPlugin {
   }
 
   /** Utility functions below **/
+
+  getAwsProvider() {
+    this.awsProvider = this.awsProvider || this.serverless.getProvider('aws');
+    return this.awsProvider;
+  }
 
   getServiceURL(serviceName) {
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';

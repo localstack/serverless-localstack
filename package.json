@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "0.4.22",
+  "version": "0.4.23",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -20,10 +20,10 @@
   },
   "author": "temyers",
   "contributors": [
+    "Waldemar Hummer (whummer)",
     "Justin McCormick <me@justinmccormick.com>",
     "djKooks",
-    "yohei1126",
-    "Waldemar Hummer (whummer)"
+    "yohei1126"
   ],
   "license": "MIT",
   "bugs": {
