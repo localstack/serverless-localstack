@@ -49,29 +49,28 @@ describe("LocalstackPlugin", () => {
     sandbox.restore();
   });
 
-  let simulateBeforeDeployHooks = function(instance){
+  let simulateBeforeDeployHooks = function(instance) {
     instance.readConfig();
     instance.activatePlugin();
-    instance.getStageVariable()
-    instance.reconfigureAWS()
-  }
+    instance.getStageVariable();
+    instance.reconfigureAWS();
+  };
 
   describe('#constructor()', () => {
     describe('with empty configuration', () => {
+      beforeEach(() => {
+        serverless.service.custom = {};
+        instance = new LocalstackPlugin(serverless, defaultPluginState);
+        simulateBeforeDeployHooks(instance)
+      });
 
-        beforeEach(() => {
-          serverless.service.custom = {};
-          instance = new LocalstackPlugin(serverless, defaultPluginState);
-          simulateBeforeDeployHooks(instance)
-        });
+      it('should not set the endpoints', () => {
+        expect(instance.endpoints).to.be.empty;
+      });
 
-        it('should not set the endpoints', () => {
-          expect(instance.endpoints).to.be.empty;
-        });
-
-        it('should not set the endpoint file', () => {
-          expect(instance.endpointFile).to.be.undefined;
-        });
+      it('should not set the endpoint file', () => {
+        expect(instance.endpointFile).to.be.undefined;
+      });
     });
 
     describe('with config file provided', () => {

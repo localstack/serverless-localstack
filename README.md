@@ -177,6 +177,7 @@ custom:
 
 ## Change Log
 
+* v0.4.24: Fix resolving of stage/profiles via variable expansion
 * v0.4.23: Fix config loading to enable file imports; fix output of API endpoints if plugin is not activated; enable SSM and CF output refs by performing early plugin loading
 * v0.4.21: Fix integration with `serverless-plugin-typescript` when `mountCode` is enabled
 * v0.4.20: Use `LAMBDA_EXECUTOR`/`LAMBDA_REMOTE_DOCKER` configurations from environment
