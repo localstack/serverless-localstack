@@ -3,12 +3,16 @@ service: aws-nodejs
 provider:
   name: aws
   runtime: nodejs6.10
+  stage: ${opt:stage, self:custom.defaultStage}
 
 plugins:
   - serverless-localstack
 
 custom:
+  defaultStage: local
   localstack:
+    debug: true
+    stages: [local]
     host: http://localhost
     endpointFile: localstack_endpoints.json
 

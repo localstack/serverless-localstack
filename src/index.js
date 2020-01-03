@@ -236,7 +236,7 @@ class LocalstackPlugin {
     // Activate the plugin if either:
     //   (1) the serverless stage (explicitly defined or default stage "dev") is included in the `stages` config; or
     //   (2) serverless is invoked without a --stage flag (default stage "dev") and no `stages` config is provided
-    const effectiveStage = this.options.stage || DEFAULT_STAGE;
+    const effectiveStage = this.options.stage || this.config.stage || DEFAULT_STAGE;
     const noStageUsed = this.config.stages === undefined && effectiveStage == DEFAULT_STAGE;
     const includedInStages = this.config.stages && this.config.stages.includes(effectiveStage);
     return noStageUsed || includedInStages;
@@ -374,7 +374,7 @@ class LocalstackPlugin {
       return result;
     };
     const awsProvider = this.getAwsProvider();
-    const providerRequestOrig = awsProvider.request;
+    const providerRequestOrig = awsProvider.request.bind(awsProvider);
     awsProvider.request = providerRequest;
   }
 
