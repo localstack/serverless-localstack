@@ -64,7 +64,7 @@ custom:
     endpoints:
       # This section is optional - can be used for customizing the target endpoints
       S3: http://localhost:4572
-      DynamoDB: http://localhost:4570
+      DynamoDB: http://localhost:4569
       CloudFormation: http://localhost:4581
       Elasticsearch: http://localhost:4571
       ES: http://localhost:4578
