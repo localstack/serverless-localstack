@@ -328,7 +328,7 @@ class LocalstackPlugin {
         if (this.shouldRunDockerSudo()) {
           env.DOCKER_CMD = 'sudo docker';
         }
-        const options = {env: env};
+        const options = {env: env, maxBuffer: 15*1000*1000}; // 15mb buffer to handle output
         return exec('localstack infra start --docker', options).then(getContainer)
           .then((containerID) => checkStatus(containerID)
         );
