@@ -253,10 +253,12 @@ class LocalstackPlugin {
   }
 
   getStageVariable() {
+    const customConfig = this.serverless.service.custom || {};
+    const providerConfig = this.serverless.service.provider || {};
     this.debug('config.options_stage: ' + this.config.options_stage);
-    this.debug('serverless.service.custom.stage: ' + this.serverless.service.custom.stage);
-    this.debug('serverless.service.provider.stage: ' + this.serverless.service.provider.stage);
-    this.config.stage = this.config.options_stage || this.serverless.service.custom.stage || this.serverless.service.provider.stage;
+    this.debug('serverless.service.custom.stage: ' + customConfig.stage);
+    this.debug('serverless.service.provider.stage: ' + providerConfig.stage);
+    this.config.stage = this.config.options_stage || customConfig.stage || providerConfig.stage;
     this.debug('config.stage: ' + this.config.stage);
   }
 
@@ -266,7 +268,7 @@ class LocalstackPlugin {
     }
     const plugin = this.findPlugin('AwsInfo');
     const endpoints = plugin.gatheredData.info.endpoints || [];
-    const edgePort = this.config.edgePort || DEFAULT_EDGE_PORT
+    const edgePort = this.getEdgePort();
     endpoints.forEach((entry, idx) => {
       const regex = /.*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
       const replace = 'http://localhost:' + edgePort + '/restapis/$1/$2/_user_request_$3';
@@ -402,7 +404,7 @@ class LocalstackPlugin {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
       const host = this.config.host || 'http://localhost';
-      const edgePort = this.config.edgePort || DEFAULT_EDGE_PORT
+      const edgePort = this.getEdgePort();
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
@@ -498,14 +500,18 @@ class LocalstackPlugin {
 
   /** Utility functions below **/
 
+  getEdgePort() {
+    return this.config.edgePort || DEFAULT_EDGE_PORT;
+  }
+
   getAwsProvider() {
     this.awsProvider = this.awsProvider || this.serverless.getProvider('aws');
     return this.awsProvider;
   }
 
-  getServiceURL(serviceName) {
+  getServiceURL() {
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
-    return `${proto}://localhost:${this.config.edgePort || DEFAULT_EDGE_PORT}`;
+    return `${proto}://localhost:${this.getEdgePort()}`;
   }
 
   log(msg) {

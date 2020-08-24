@@ -60,18 +60,8 @@ custom:
       # list of stages for which the plugin should be enabled
       - local
     host: http://localhost  # optional - LocalStack host to connect to
+    edgePort: 4566  # optional - LocalStack edge port to connect to
     autostart: true  # optional - start LocalStack in Docker on Serverless deploy
-    endpoints:
-      # This section is optional - can be used for customizing the target endpoints
-      S3: http://localhost:4572
-      DynamoDB: http://localhost:4569
-      CloudFormation: http://localhost:4581
-      Elasticsearch: http://localhost:4571
-      ES: http://localhost:4578
-      SNS: http://localhost:4575
-      SQS: http://localhost:4576
-      Lambda: http://localhost:4574
-      Kinesis: http://localhost:4568
     lambda:
       # Enable this flag to improve performance
       mountCode: True
@@ -177,6 +167,7 @@ custom:
 
 ## Change Log
 
+* v0.4.25: Use single edge port instead of deprecated service-specific ports
 * v0.4.24: Fix resolving of stage/profiles via variable expansion
 * v0.4.23: Fix config loading to enable file imports; fix output of API endpoints if plugin is not activated; enable SSM and CF output refs by performing early plugin loading
 * v0.4.21: Fix integration with `serverless-plugin-typescript` when `mountCode` is enabled
