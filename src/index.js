@@ -10,6 +10,8 @@ const DEFAULT_STAGE = 'dev';
 const TRUE_VALUES = ['1', 'true', true];
 // Build directory of serverless-plugin-typescript plugin
 const TYPESCRIPT_PLUGIN_BUILD_DIR = '.build';
+// Default edge port to use with host
+const DEFAULT_EDGE_PORT = '4566'
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -37,41 +39,41 @@ class LocalstackPlugin {
     // Add a before hook for aws:common:validate and make sure it is in the very first position
     this.addHookInFirstPosition('before:aws:common:validate:validate', this.beforeEventHook);
 
-    this.awsServices = {
-      'apigateway': 4567,
-      'cloudformation': 4581,
-      'cloudwatch': 4582,
-      'lambda': 4574,
-      'dynamodb': 4569,
-      'kinesis': 4568,
-      'route53': 4580,
-      'firehose': 4573,
-      'stepfunctions': 4585,
-      'es': 4578,
-      's3': 4572,
-      'ses': 4579,
-      'sns': 4575,
-      'sqs': 4576,
-      'sts': 4592,
-      'iam': 4593,
-      'ssm': 4583,
-      'rds': 4594,
-      'ec2': 4597,
-      'elasticache': 4598,
-      'kms': 4599,
-      'secretsmanager': 4584,
-      'logs': 4586,
-      'cloudwatchlogs': 4586,
-      'iot': 4589,
-      'cognito-idp': 4590,
-      'cognito-identity': 4591,
-      'ecs': 4601,
-      'eks': 4602,
-      'xray': 4603,
-      'appsync': 4605,
-      'cloudfront': 4606,
-      'athena': 4607
-    };
+    this.awsServices = [
+      'apigateway',
+      'cloudformation',
+      'cloudwatch',
+      'lambda',
+      'dynamodb',
+      'kinesis',
+      'route53',
+      'firehose',
+      'stepfunctions',
+      'es',
+      's3',
+      'ses',
+      'sns',
+      'sqs',
+      'sts',
+      'iam',
+      'ssm',
+      'rds',
+      'ec2',
+      'elasticache',
+      'kms',
+      'secretsmanager',
+      'logs',
+      'cloudwatchlogs',
+      'iot',
+      'cognito-idp',
+      'cognito-identity',
+      'ecs',
+      'eks',
+      'xray',
+      'appsync',
+      'cloudfront',
+      'athena',
+    ];
 
     // Activate the synchronous parts of plugin config here in the constructor, but
     // run the async logic in enablePlugin(..) later via the hooks.
@@ -264,9 +266,10 @@ class LocalstackPlugin {
     }
     const plugin = this.findPlugin('AwsInfo');
     const endpoints = plugin.gatheredData.info.endpoints || [];
+    const edgePort = this.config.edgePort || DEFAULT_EDGE_PORT
     endpoints.forEach((entry, idx) => {
       const regex = /.*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
-      const replace = 'http://localhost:' + this.awsServices.apigateway + '/restapis/$1/$2/_user_request_$3';
+      const replace = 'http://localhost:' + edgePort + '/restapis/$1/$2/_user_request_$3';
       endpoints[idx] = entry.replace(regex, replace);
     });
   }
@@ -399,6 +402,7 @@ class LocalstackPlugin {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
       const host = this.config.host || 'http://localhost';
+      const edgePort = this.config.edgePort || DEFAULT_EDGE_PORT
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
@@ -418,10 +422,9 @@ class LocalstackPlugin {
       }
 
       // If a host has been configured, override each service
-      for (const service of Object.keys(this.awsServices)) {
+      for (const service of this.awsServices) {
         const serviceLower = service.toLowerCase();
-        const port = this.awsServices[service];
-        const url = `${host}:${port}`;
+        const url = `${host}:${edgePort}`;
 
         this.debug(`Reconfiguring service ${service} to use ${url}`);
         configChanges[serviceLower] = { endpoint: url };
@@ -502,7 +505,7 @@ class LocalstackPlugin {
 
   getServiceURL(serviceName) {
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
-    return `${proto}://localhost:${this.awsServices[serviceName]}`;
+    return `${proto}://localhost:${this.config.edgePort || DEFAULT_EDGE_PORT}`;
   }
 
   log(msg) {
