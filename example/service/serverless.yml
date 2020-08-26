@@ -2,6 +2,7 @@ service: aws-nodejs
 
 provider:
   name: aws
+  profile: ${opt:profile, self:custom.profile}
   runtime: nodejs6.10
   stage: ${opt:stage, self:custom.defaultStage}
 
@@ -10,6 +11,7 @@ plugins:
 
 custom:
   defaultStage: local
+  profile: default
   localstack:
     debug: true
     stages: [local]

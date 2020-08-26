@@ -167,6 +167,7 @@ custom:
 
 ## Change Log
 
+* v0.4.26: Fix resolution of template variables during plugin initialization
 * v0.4.25: Use single edge port instead of deprecated service-specific ports
 * v0.4.24: Fix resolving of stage/profiles via variable expansion
 * v0.4.23: Fix config loading to enable file imports; fix output of API endpoints if plugin is not activated; enable SSM and CF output refs by performing early plugin loading

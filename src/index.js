@@ -94,12 +94,21 @@ class LocalstackPlugin {
     }
 
     // Intercept Provider requests
-    const awsProvider = this.getAwsProvider();
-    this.awsProviderRequest = awsProvider.request.bind(awsProvider);
-    awsProvider.request = this.interceptRequest.bind(this);
+    if (!this.awsProviderRequest) {
+      const awsProvider = this.getAwsProvider();
+      this.awsProviderRequest = awsProvider.request.bind(awsProvider);
+      awsProvider.request = this.interceptRequest.bind(this);
+    }
 
     // Reconfigure AWS clients
-    this.reconfigureAWS();
+    try {
+      this.reconfigureAWS();
+    } catch (e) {
+      // This can happen if we are executing in the plugin initialization context and
+      // the template variables have not been fully initialized yet
+      // (e.g., "Error: Profile ${self:custom.stage}Profile does not exist")
+      return;
+    }
 
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService')
