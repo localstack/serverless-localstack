@@ -167,6 +167,7 @@ custom:
 
 ## Change Log
 
+* v0.4.27: Fix loading of endpoints file with variable references to be resolved
 * v0.4.26: Fix resolution of template variables during plugin initialization
 * v0.4.25: Use single edge port instead of deprecated service-specific ports
 * v0.4.24: Fix resolving of stage/profiles via variable expansion

@@ -111,7 +111,7 @@ describe("LocalstackPlugin", () => {
 
         expect(plugin.config.stages).to.deep.equal(['production','staging']);
         expect(plugin.config.stage).to.equal('production');
-        expect(plugin.endpoints).to.deep.equal(endpoints)
+        expect(plugin.endpoints).to.deep.equal(endpoints);
       });
 
       it('should fail if the endpoint file does not exist', () => {
@@ -124,7 +124,7 @@ describe("LocalstackPlugin", () => {
           pluginInstance.readConfig();
         }
 
-        expect(plugin).to.throw('Endpoint: "missing.json" is invalid:')
+        expect(plugin).to.throw('Endpoint file "missing.json" is invalid:')
       });
 
       it('should fail if the endpoint file is not json', () => {
@@ -135,7 +135,7 @@ describe("LocalstackPlugin", () => {
           let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
           pluginInstance.readConfig();
         }
-        expect(plugin).to.throw(/Endpoint: "README.md" is invalid:/)
+        expect(plugin).to.throw(/Endpoint file "README.md" is invalid:/)
       });
 
     });

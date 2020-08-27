@@ -229,16 +229,27 @@ class LocalstackPlugin {
     this.config.stage = "";
     this.config.options_stage = this.options.stage || undefined;
 
-    //If the target stage is listed in config.stages use the serverless-localstack-plugin
-    //To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
-    this.endpoints = this.config.endpoints || {};
-    this.endpointFile = this.config.endpointFile;
-    if (this.endpointFile) {
-      this.loadEndpointsFromDisk(this.endpointFile);
-    }
-
     // read current stage variable - to determine whether to reconfigure AWS endpoints
     this.getStageVariable();
+
+    // If the target stage is listed in config.stages use the serverless-localstack-plugin
+    // To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
+    this.endpoints = this.endpoints || this.config.endpoints || {};
+    this.endpointFile = this.config.endpointFile;
+    if (this.endpointFile && !this._endpointFileLoaded) {
+      try {
+        this.loadEndpointsFromDisk(this.endpointFile);
+        this._endpointFileLoaded = true;
+      } catch (e) {
+        if (!this.endpointFile.includes('${')) {
+          throw e;
+        }
+        // Could be related to variable references not being resolved yet, and hence the endpoints file
+        // name looks something like "${env:ENDPOINT_FILE}" -> this readConfig() function is called multiple
+        // times from plugin hooks, hence we return here and expect that next time around it may work...
+        return;
+      }
+    }
 
     this.configInitialized = this.configInitialized || !preHooks;
   }
@@ -479,7 +490,7 @@ class LocalstackPlugin {
     try {
       endpointJson = JSON.parse( fs.readFileSync(endpointFile) );
     } catch(err) {
-      throw new ReferenceError(`Endpoint: "${this.endpointFile}" is invalid: ${err}`)
+      throw new ReferenceError(`Endpoint file "${this.endpointFile}" is invalid: ${err}`)
     }
 
     for (const key of Object.keys(endpointJson)) {
