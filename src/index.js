@@ -236,7 +236,7 @@ class LocalstackPlugin {
     // To keep default behavior if config.stages is undefined, then use serverless-localstack-plugin
     this.endpoints = this.endpoints || this.config.endpoints || {};
     this.endpointFile = this.config.endpointFile;
-    if (this.endpointFile && !this._endpointFileLoaded) {
+    if (this.endpointFile && !this._endpointFileLoaded && this.isActive()) {
       try {
         this.loadEndpointsFromDisk(this.endpointFile);
         this._endpointFileLoaded = true;
