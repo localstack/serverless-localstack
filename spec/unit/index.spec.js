@@ -114,17 +114,32 @@ describe("LocalstackPlugin", () => {
         expect(plugin.endpoints).to.deep.equal(endpoints);
       });
 
-      it('should fail if the endpoint file does not exist', () => {
+      it('should fail if the endpoint file does not exist and the stages config option includes the deployment stage', () => {
         serverless.service.custom.localstack = {
-          endpointFile: 'missing.json'
+          endpointFile: 'missing.json',
+          stages: ['production']
         }
 
         let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
+          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'production'});
           pluginInstance.readConfig();
         }
 
         expect(plugin).to.throw('Endpoint file "missing.json" is invalid:')
+      });
+
+      it('should not fail if the endpoint file does not exist when the stages config option does not include the deployment stage', () => {
+        serverless.service.custom.localstack = {
+          endpointFile: 'missing.json',
+          stages: ['production']
+        }
+
+        let plugin = () => {
+          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'staging'});
+          pluginInstance.readConfig();
+        }
+
+        expect(plugin).to.not.throw('Endpoint file "missing.json" is invalid:')
       });
 
       it('should fail if the endpoint file is not json', () => {
