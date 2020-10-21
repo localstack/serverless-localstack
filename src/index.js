@@ -500,6 +500,13 @@ class LocalstackPlugin {
   }
 
   interceptRequest(service, method, params) {
+
+    // Enable the plugin here, if not yet enabled (the function call below is idempotent).
+    // TODO: It seems that we can potentially remove the hooks / plugin loading logic
+    //    entirely and only rely on activating the -> we should evaluate this, as it would
+    //    substantially simplify the code in this file.
+    this.beforeEventHook();
+
     // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
       this.log('Skipping template validation: Unsupported in Localstack');
