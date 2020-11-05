@@ -16,27 +16,6 @@ The easiest way to get started is to install via npm.
     npm install -g serverless
     npm install --save-dev serverless-localstack
 
-## Installation (without npm)
-
-If you'd like to install serverless-localstack via source:
-
-#### Clone the repository
-
-```
-git clone https://github.com/localstack/serverless-localstack
-cd serverless-localstack
-npm link      
-```
-
-#### Install the plugin
-
-Use `npm link` to reference the plugin
-
-```
-cd project-path/
-npm link serverless-localstack
-```
-
 ## Configuring
 
 There are two ways to configure the plugin, via a JSON file or via `serverless.yml`.
@@ -47,6 +26,9 @@ global override support while also override specific endpoints.
 A `host` or individual endpoints must be configured or this plugin will be deactivated.
 
 ### Configuration via serverless.yml
+
+Please refer to the example configuration template below. (Please note that most configurations
+in the sample are optional and need not be specified.)
 
 ```
 service: myService
@@ -61,7 +43,7 @@ custom:
       - local
     host: http://localhost  # optional - LocalStack host to connect to
     edgePort: 4566  # optional - LocalStack edge port to connect to
-    autostart: true  # optional - start LocalStack in Docker on Serverless deploy
+    autostart: true  # optional - Start LocalStack in Docker on Serverless deploy
     lambda:
       # Enable this flag to improve performance
       mountCode: True
@@ -99,19 +81,6 @@ it, and finally copying/mounting it into a Docker container to run the Lambda.
    see [LocalStack repo](https://github.com/localstack/localstack)
 * `LAMBDA_REMOTE_DOCKER`: Whether to assume that we're running Lambda containers against
    a remote Docker daemon (default `false`) - see [LocalStack repo](https://github.com/localstack/localstack)
-
-### Configuring endpoints via JSON
-
-```
-service: myService
-
-plugins:
-  - serverless-localstack
-
-custom:
-  localstack:
-    endpointFile: path/to/file.json
-```
 
 ### Only enable serverless-localstack for the listed stages
 * ```serverless deploy --stage local``` would deploy to LocalStack.
