@@ -136,6 +136,7 @@ custom:
 
 ## Change Log
 
+* v0.4.29: Add missing service endpoints to config
 * v0.4.28: Fix plugin activation for variable refs in profile names
 * v0.4.27: Fix loading of endpoints file with variable references to be resolved
 * v0.4.26: Fix resolution of template variables during plugin initialization
