@@ -8,7 +8,6 @@ const AWS = require('aws-sdk');
 const Serverless = require('serverless')
 const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider')
 const path = require('path');
-const localstackEndpointsFile = path.normalize( path.join(__dirname, '../../example/service/localstack_endpoints.json') );
 
 chai.use(require('chai-string'));
 
@@ -38,9 +37,11 @@ describe("LocalstackPlugin", () => {
     awsProvider.config = awsConfig;
     serverless.init();
     serverless.setProvider('aws', awsProvider);
-    serverless.cli.log = () => {
-      if (debug) {
-        console.log.apply(this, arguments);  // eslint-disable-line no-console
+    if (serverless.cli) {
+      serverless.cli.log = () => {
+        if (debug) {
+          console.log.apply(this, arguments);  // eslint-disable-line no-console
+        }
       }
     }
   });
@@ -76,22 +77,10 @@ describe("LocalstackPlugin", () => {
     describe('with config file provided', () => {
       beforeEach(() => {
         serverless.service.custom = {
-          localstack: {
-            endpointFile: localstackEndpointsFile
-          }
+          localstack: {}
         };
         instance = new LocalstackPlugin(serverless, defaultPluginState);
         simulateBeforeDeployHooks(instance);
-      });
-
-      it('should set the endpoint file', () => {
-        expect(instance.endpointFile).to.equal(localstackEndpointsFile)
-      });
-
-      it('should copy the endpoints to the AWS provider options', ()=> {
-        let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
-
-        expect(instance.endpoints).to.deep.equal(endpoints)
       });
 
       it('should not set the endpoints if the stages config option does not include the deployment stage', () => {
@@ -107,11 +96,9 @@ describe("LocalstackPlugin", () => {
 
         let plugin = new LocalstackPlugin(serverless, {'stage':'production'})
         simulateBeforeDeployHooks(plugin);
-        let endpoints = JSON.parse(fs.readFileSync(localstackEndpointsFile))
 
         expect(plugin.config.stages).to.deep.equal(['production','staging']);
         expect(plugin.config.stage).to.equal('production');
-        expect(plugin.endpoints).to.deep.equal(endpoints);
       });
 
       it('should fail if the endpoint file does not exist and the stages config option includes the deployment stage', () => {
@@ -160,7 +147,6 @@ describe("LocalstackPlugin", () => {
 
     beforeEach(()=> {
       class FakeService {
-
         foo() {
           return this;
         }
@@ -168,14 +154,11 @@ describe("LocalstackPlugin", () => {
         send() {
           return this;
         }
-
       }
 
       serverless.providers.aws.sdk.S3 = FakeService;
       serverless.service.custom = {
-        localstack: {
-          endpointFile: localstackEndpointsFile,
-        }
+        localstack: {}
       }
     });
 

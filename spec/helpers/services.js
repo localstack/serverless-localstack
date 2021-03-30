@@ -13,7 +13,8 @@ const defaultConfig = {
   service: 'aws-nodejs',
   provider: {
     name: 'aws',
-    runtime: 'nodejs6.10'
+    runtime: 'nodejs12.x',
+    lambdaHashingVersion: '20201221'
   },
   plugins: [
     'serverless-localstack'
@@ -37,7 +38,7 @@ const installPlugin = (dir) => {
   fs.mkdirsSync(pluginsDir);
 
   execSync(`npm link ${packageJson.name}`, {cwd: dir})
-}
+};
 
 const execServerless = (arguments, dir) => {
   process.chdir(dir);
@@ -52,7 +53,7 @@ const execServerless = (arguments, dir) => {
       SLS_DEBUG: debug ? '*' : ''
     })
   });
-}
+};
 
 exports.createService = (config, dir) => {
   dir = dir || tempy.directory();
@@ -68,8 +69,8 @@ exports.createService = (config, dir) => {
 
 exports.deployService = (dir) => {
   execServerless('deploy', dir);
-}
+};
 
 exports.removeService = (dir) => {
   rimraf.sync(dir)
-}
+};

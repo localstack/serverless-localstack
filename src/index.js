@@ -11,7 +11,7 @@ const TRUE_VALUES = ['1', 'true', true];
 // Build directory of serverless-plugin-typescript plugin
 const TYPESCRIPT_PLUGIN_BUILD_DIR = '.build';
 // Default edge port to use with host
-const DEFAULT_EDGE_PORT = '4566'
+const DEFAULT_EDGE_PORT = '4566';
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -19,9 +19,11 @@ class LocalstackPlugin {
     this.serverless = serverless;
     this.options = options;
 
-    this.commands = {
-      deploy: {lifecycleEvents: ['resources']}
-    };
+    // TODO - still needed?
+    // this.commands = this.commands || {};
+    // this.commands.deploy = this.commands.deploy || {};
+    // this.commands.deploy.lifecycleEvents = ['resources'];
+
     this.hooks = {};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
@@ -577,7 +579,9 @@ class LocalstackPlugin {
   }
 
   log(msg) {
-    this.serverless.cli.log.call(this.serverless.cli, msg);
+    if (this.serverless.cli) {
+      this.serverless.cli.log.call(this.serverless.cli, msg);
+    }
   }
 
   debug(msg) {
