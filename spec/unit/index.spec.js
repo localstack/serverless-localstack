@@ -3,11 +3,14 @@ const LocalstackPlugin = require('../../src/index');
 const chai = require('chai');
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const fs = require('fs')
 const AWS = require('aws-sdk');
 const Serverless = require('serverless')
-const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider')
-const path = require('path');
+let AwsProvider;
+try {
+  AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
+} catch (e) {
+  AwsProvider = require('serverless/lib/plugins/aws/provider');
+}
 
 chai.use(require('chai-string'));
 
