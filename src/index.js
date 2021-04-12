@@ -604,8 +604,7 @@ class LocalstackPlugin {
   stepFunctionsReplaceDisplay() {
     const plugin = this.findPlugin('ServerlessStepFunctions');
     if (plugin) {
-      const edgePort = this.getEdgePort();
-      const endpoint = `http://localhost:${edgePort}`
+      const endpoint = this.getServiceURL()
       plugin.originalDisplay = plugin.display;
       plugin.localstackEndpoint = endpoint;
 
