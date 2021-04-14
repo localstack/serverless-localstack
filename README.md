@@ -122,7 +122,7 @@ custom:
       - local
     lambda:
       mountCode: true
-    autostart: true
+    autoStart: true
 ```
 
 ### Environment Configurations
