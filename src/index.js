@@ -331,6 +331,9 @@ class LocalstackPlugin {
       const replace = 'http://localhost:' + edgePort + '/restapis/$1/$2/_user_request_$3';
       endpoints[idx] = entry.replace(regex, replace);
     });
+    
+    // Replace ServerlessStepFunctions display
+    this.stepFunctionsReplaceDisplay()
   }
 
   /**
@@ -596,6 +599,25 @@ class LocalstackPlugin {
 
   clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+  }
+  
+  stepFunctionsReplaceDisplay() {
+    const plugin = this.findPlugin('ServerlessStepFunctions');
+    if (plugin) {
+      const endpoint = this.getServiceURL()
+      plugin.originalDisplay = plugin.display;
+      plugin.localstackEndpoint = endpoint;
+
+      const newDisplay = function () {
+        const regex = /.*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
+        let newEndpoint = this.localstackEndpoint +'/restapis/$1/$2/_user_request_$3'
+        this.endpointInfo = this.endpointInfo.replace(regex, newEndpoint)
+        this.originalDisplay();
+      }
+      
+      newDisplay.bind(plugin)
+      plugin.display = newDisplay;
+    }
   }
 
 }
