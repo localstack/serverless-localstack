@@ -117,7 +117,7 @@ custom:
     webpackConfig: webpack.config.js
     includeModules: true
     keepoutputDirectory: true
-  localstack
+  localstack:
     stages:
       - local
     lambda:
