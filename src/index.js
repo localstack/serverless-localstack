@@ -10,10 +10,10 @@ const DEFAULT_STAGE = 'dev';
 const TRUE_VALUES = ['1', 'true', true];
 // Plugin naming and build directory of serverless-plugin-typescript plugin
 const TS_PLUGIN_TSC = 'TypeScriptPlugin'
-const TYPESCRIPT_PLUGIN_BUILD_DIR_TSC = '.build';
+const TYPESCRIPT_PLUGIN_BUILD_DIR_TSC = '.build'; //TODO detect from tsconfig.json
 // Plugin naming and build directory of serverless-webpack plugin
 const TS_PLUGIN_WEBPACK = 'ServerlessWebpack'
-const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service';
+const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect from webpack.config.js
 
 // Default edge port to use with host
 const DEFAULT_EDGE_PORT = '4566';
@@ -123,7 +123,7 @@ class LocalstackPlugin {
 
     // If we're using webpack, we need to make sure we retain the compiler output directory
     if (this.detectTypescriptPluginType() === TS_PLUGIN_WEBPACK) {
-      const p = this.serverless.pluginManager.plugins.find((x) => x.constructor.name === TS_PLUGIN_WEBPACK)
+      const p = this.serverless.pluginManager.plugins.find((x) => x.constructor.name === TS_PLUGIN_WEBPACK);
       if (
         this.shouldMountCode() && (
           !p ||
@@ -134,7 +134,8 @@ class LocalstackPlugin {
           !p.serverless.configurationInput.custom.webpack.keepOutputDirectory
         )
       ) {
-        throw new Error('When mounting Lambda code, you must retain webpack output directory. Set custom.webpack.keepOutputDirectory to true.')
+        throw new Error('When mounting Lambda code, you must retain webpack output directory. '
+          + 'Set custom.webpack.keepOutputDirectory to true.');
       }
     }
   }
@@ -193,7 +194,6 @@ class LocalstackPlugin {
               // into the VM (e.g., "c:/users/guest/...").
               res.Properties.Code.S3Key = process.env.LAMBDA_MOUNT_CWD;
             }
-            console.log('res.Properties.Code.S3Key', res.Properties.Code.S3Key)
           }
         });
       });
@@ -425,14 +425,13 @@ class LocalstackPlugin {
         env.DEBUG = '1';
         env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
         env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
-        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`; // THIS IS THE MAGIC
+        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
         env.START_WEB = env.START_WEB || '0';
         const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
         if (this.shouldRunDockerSudo()) {
           env.DOCKER_CMD = 'sudo docker';
         }
         const options = {env: env, maxBuffer};
-        console.log('Running', 'localstack infra start --docker', options)
         return exec('localstack infra start --docker', options).then(getContainer)
           .then((containerID) => checkStatus(containerID)
         );
