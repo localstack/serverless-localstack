@@ -68,7 +68,62 @@ into the Docker container that runs the Lambda code in LocalStack. If you remove
 flag, your Lambda code is deployed in the traditional way which is more in line with
 how things work in AWS, but also comes with a performance penalty: packaging the code,
 uploading it to the local S3 service, downloading it in the local Lambda API, extracting
-it, and finally copying/mounting it into a Docker container to run the Lambda.
+it, and finally copying/mounting it into a Docker container to run the Lambda. Mounting code
+from multiple projects is not supported with simple configuration, and you must use the
+`autoStart` feature, as your code will be mounted in docker at start up. If you do need to
+mount code from multiple serverless projects, manually launch
+localstack with volumes specified. For example:
+
+```sh
+localstack infra start --docker -d \
+  -v /path/to/project-a:/path/to/project-a \
+  -v /path/to/project-b:/path/to/project-b
+```
+
+If you use either `serverless-webpack` or `serverless-plugin-typescript`, `serverless-localstack`
+will detect it and modify the mount paths to point to your output directory. You will need to invoke
+the build command in order for the mounted code to be updated. (eg: `serverless webpack`). There is no
+`--watch` support for this out of the box, but could be accomplished using nodemon:
+
+```sh
+npm i --save-dev nodemon
+```
+
+`package.json`:
+
+```json
+  "scripts": {
+    "build": "serverless webpack --stage local",
+    "deploy": "serverless deploy --stage local",
+    "watch": "nodemon -w src -e '.*' -x 'npm run build'",
+    "start": "npm run deploy && npm run watch"
+  },
+```
+
+```sh
+npm run start
+```
+
+#### A note on using webpack
+
+`serverless-webpack` is supported, with code mounting. However, there are some assumptions
+and configuration requirements. First, your output directory must be `.webpack`. Second, you must retain
+your output directory contents. You can do this by modifying the `custom > webpack` portion of your
+serverless configuration file.
+
+```yml
+custom:
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules: true
+    keepoutputDirectory: true
+  localstack:
+    stages:
+      - local
+    lambda:
+      mountCode: true
+    autoStart: true
+```
 
 ### Environment Configurations
 

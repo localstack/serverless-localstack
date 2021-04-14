@@ -8,8 +8,13 @@ const exec = promisify(require('child_process').exec);
 const DEFAULT_STAGE = 'dev';
 // Strings or other values considered to represent "true"
 const TRUE_VALUES = ['1', 'true', true];
-// Build directory of serverless-plugin-typescript plugin
-const TYPESCRIPT_PLUGIN_BUILD_DIR = '.build';
+// Plugin naming and build directory of serverless-plugin-typescript plugin
+const TS_PLUGIN_TSC = 'TypeScriptPlugin'
+const TYPESCRIPT_PLUGIN_BUILD_DIR_TSC = '.build'; //TODO detect from tsconfig.json
+// Plugin naming and build directory of serverless-webpack plugin
+const TS_PLUGIN_WEBPACK = 'ServerlessWebpack'
+const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect from webpack.config.js
+
 // Default edge port to use with host
 const DEFAULT_EDGE_PORT = '4566';
 
@@ -115,6 +120,24 @@ class LocalstackPlugin {
     // Activate the synchronous parts of plugin config here in the constructor, but
     // run the async logic in enablePlugin(..) later via the hooks.
     this.activatePlugin(true);
+
+    // If we're using webpack, we need to make sure we retain the compiler output directory
+    if (this.detectTypescriptPluginType() === TS_PLUGIN_WEBPACK) {
+      const p = this.serverless.pluginManager.plugins.find((x) => x.constructor.name === TS_PLUGIN_WEBPACK);
+      if (
+        this.shouldMountCode() && (
+          !p ||
+          !p.serverless ||
+          !p.serverless.configurationInput ||
+          !p.serverless.configurationInput.custom ||
+          !p.serverless.configurationInput.custom.webpack ||
+          !p.serverless.configurationInput.custom.webpack.keepOutputDirectory
+        )
+      ) {
+        throw new Error('When mounting Lambda code, you must retain webpack output directory. '
+          + 'Set custom.webpack.keepOutputDirectory to true.');
+      }
+    }
   }
 
   addHookInFirstPosition(eventName, hookFunction) {
@@ -179,8 +202,10 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
     this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
-    this.skipIfMountLambda('TypeScriptPlugin', 'cleanup', null, [
-      'after:package:createDeploymentArtifacts', 'after:deploy:function:packageFunction']);
+    if (this.detectTypescriptPluginType()) {
+      this.skipIfMountLambda(this.detectTypescriptPluginType(), 'cleanup', null, [
+        'after:package:createDeploymentArtifacts', 'after:deploy:function:packageFunction']);
+    }
 
     this.pluginActivated = true;
   }
@@ -206,6 +231,21 @@ class LocalstackPlugin {
           this.patchS3BucketLocationResponse();
       }
     );
+  }
+
+  // Convenience method for detecting JS/TS transpiler
+  detectTypescriptPluginType() {
+    if (this.findPlugin(TS_PLUGIN_TSC)) return TS_PLUGIN_TSC
+    if (this.findPlugin(TS_PLUGIN_WEBPACK)) return TS_PLUGIN_WEBPACK
+    return undefined
+  }
+
+  // Convenience method for getting build directory of installed JS/TS transpiler
+  getTSBuildDir() {
+    const TS_PLUGIN = this.detectTypescriptPluginType()
+    if (TS_PLUGIN === TS_PLUGIN_TSC) return TYPESCRIPT_PLUGIN_BUILD_DIR_TSC
+    if (TS_PLUGIN === TS_PLUGIN_WEBPACK) return TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK
+    return undefined
   }
 
   findPlugin(name) {
@@ -407,7 +447,7 @@ class LocalstackPlugin {
    * used, and (2) lambda.mountCode is enabled.
    */
   patchTypeScriptPluginMountedCodeLocation() {
-    if (!this.shouldMountCode() || !this.findPlugin('TypeScriptPlugin')) {
+    if (!this.shouldMountCode() || !this.detectTypescriptPluginType()) {
       return;
     }
     const template = this.serverless.service.provider.compiledCloudFormationTemplate || {};
@@ -416,7 +456,7 @@ class LocalstackPlugin {
       (resName) => {
         const resEntry = resources[resName];
         if (resEntry.Type === 'AWS::Lambda::Function') {
-          resEntry.Properties.Handler = `${TYPESCRIPT_PLUGIN_BUILD_DIR}/${resEntry.Properties.Handler}`;
+          resEntry.Properties.Handler = `${this.getTSBuildDir()}/${resEntry.Properties.Handler}`;
         }
       }
     );
