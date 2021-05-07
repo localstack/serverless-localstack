@@ -191,6 +191,8 @@ custom:
 
 ## Change Log
 
+* v0.4.31: Fix format of API GW endpoints printed in stack output
+* v0.4.30: Fix plugin for use with Serverless version 2.30+
 * v0.4.29: Add missing service endpoints to config
 * v0.4.28: Fix plugin activation for variable refs in profile names
 * v0.4.27: Fix loading of endpoints file with variable references to be resolved
