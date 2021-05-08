@@ -24,11 +24,6 @@ class LocalstackPlugin {
     this.serverless = serverless;
     this.options = options;
 
-    // TODO - still needed?
-    // this.commands = this.commands || {};
-    // this.commands.deploy = this.commands.deploy || {};
-    // this.commands.deploy.lifecycleEvents = ['resources'];
-
     this.hooks = {};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
@@ -379,7 +374,7 @@ class LocalstackPlugin {
       const replace2 = `https://$1.execute-api.localhost.localstack.cloud:${edgePort}$2`;
       endpoints[idx] = entry.replace(regex2, replace2);
     });
-    
+
     // Replace ServerlessStepFunctions display
     this.stepFunctionsReplaceDisplay()
   }
@@ -532,12 +527,12 @@ class LocalstackPlugin {
       }
 
       // If a host has been configured, override each service
+      const localEndpoint = `${host}:${edgePort}`;
       for (const service of this.awsServices) {
         const serviceLower = service.toLowerCase();
-        const url = `${host}:${edgePort}`;
 
-        this.debug(`Reconfiguring service ${service} to use ${url}`);
-        configChanges[serviceLower] = { endpoint: url };
+        this.debug(`Reconfiguring service ${service} to use ${localEndpoint}`);
+        configChanges[serviceLower] = { endpoint: localEndpoint };
 
         if (serviceLower == 's3') {
           configChanges[serviceLower].s3ForcePathStyle = true;
@@ -557,7 +552,11 @@ class LocalstackPlugin {
       }
 
       // update SDK with overridden configs
-      this.getAwsProvider().sdk.config.update(configChanges);
+      awsProvider.sdk.config.update(configChanges);
+      if (awsProvider.cachedCredentials) {
+        // required for compatibility with certain plugin, e.g., serverless-domain-manager
+        awsProvider.cachedCredentials.endpoint = localEndpoint;
+      }
     }
     else {
       this.endpoints = {}
@@ -648,7 +647,7 @@ class LocalstackPlugin {
   clone(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
-  
+
   stepFunctionsReplaceDisplay() {
     const plugin = this.findPlugin('ServerlessStepFunctions');
     if (plugin) {
@@ -662,7 +661,7 @@ class LocalstackPlugin {
         this.endpointInfo = this.endpointInfo.replace(regex, newEndpoint)
         this.originalDisplay();
       }
-      
+
       newDisplay.bind(plugin)
       plugin.display = newDisplay;
     }
