@@ -70,7 +70,7 @@ how things work in AWS, but also comes with a performance penalty: packaging the
 uploading it to the local S3 service, downloading it in the local Lambda API, extracting
 it, and finally copying/mounting it into a Docker container to run the Lambda. Mounting code
 from multiple projects is not supported with simple configuration, and you must use the
-`autoStart` feature, as your code will be mounted in docker at start up. If you do need to
+`autostart` feature, as your code will be mounted in docker at start up. If you do need to
 mount code from multiple serverless projects, manually launch
 localstack with volumes specified. For example:
 
@@ -122,7 +122,7 @@ custom:
       - local
     lambda:
       mountCode: true
-    autoStart: true
+    autostart: true
 ```
 
 ### Environment Configurations
