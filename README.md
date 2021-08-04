@@ -191,6 +191,7 @@ custom:
 
 ## Change Log
 
+* v0.4.33: Fix parsing StepFunctions endpoint if the endpointInfo isn't defined
 * v0.4.32: Add endpoint to AWS credentials for compatibility with serverless-domain-manager plugin
 * v0.4.31: Fix format of API GW endpoints printed in stack output
 * v0.4.30: Fix plugin for use with Serverless version 2.30+
