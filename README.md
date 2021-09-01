@@ -75,7 +75,7 @@ mount code from multiple serverless projects, manually launch
 localstack with volumes specified. For example:
 
 ```sh
-localstack infra start --docker -d \
+localstack start --docker -d \
   -v /path/to/project-a:/path/to/project-a \
   -v /path/to/project-b:/path/to/project-b
 ```
