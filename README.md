@@ -44,6 +44,10 @@ custom:
     host: http://localhost  # optional - LocalStack host to connect to
     edgePort: 4566  # optional - LocalStack edge port to connect to
     autostart: true  # optional - Start LocalStack in Docker on Serverless deploy
+    networks: #optional - attaches the list of networks to the localstack docker container after startup
+      - host
+      - overlay
+      - my_custom_network
     lambda:
       # Enable this flag to improve performance
       mountCode: True
