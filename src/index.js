@@ -424,7 +424,7 @@ class LocalstackPlugin {
       let networks = [];
       if(this.config.networks) {
         for(var network in this.config.networks) {
-          await exec(`docker network connect ${this.config.networks[network]} ${containerID}`);
+          await exec(`docker network connect "${this.config.networks[network]}" ${containerID}`);
         }
       }
       return containerID;
