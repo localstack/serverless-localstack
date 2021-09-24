@@ -420,6 +420,15 @@ class LocalstackPlugin {
       });
     }
 
+    const addNetworks = async (containerID) => {
+      if(this.config.networks) {
+        for(var network in this.config.networks) {
+          await exec(`docker network connect "${this.config.networks[network]}" ${containerID}`);
+        }
+      }
+      return containerID;
+    }
+    
     return getContainer().then(
       (containerID) => {
         if(containerID) {
@@ -439,8 +448,8 @@ class LocalstackPlugin {
         }
         const options = {env: env, maxBuffer};
         return exec('localstack start', options).then(getContainer)
-          .then((containerID) => checkStatus(containerID)
-        );
+          .then((containerID) => addNetworks(containerID))
+          .then((containerID) => checkStatus(containerID));
       }
     );
   }

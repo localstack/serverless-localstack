@@ -44,6 +44,10 @@ custom:
     host: http://localhost  # optional - LocalStack host to connect to
     edgePort: 4566  # optional - LocalStack edge port to connect to
     autostart: true  # optional - Start LocalStack in Docker on Serverless deploy
+    networks: #optional - attaches the list of networks to the localstack docker container after startup
+      - host
+      - overlay
+      - my_custom_network
     lambda:
       # Enable this flag to improve performance
       mountCode: True
@@ -191,6 +195,7 @@ custom:
 
 ## Change Log
 
+* v0.4.35: Add config option to connect to additional docker networks
 * v0.4.33: Fix parsing StepFunctions endpoint if the endpointInfo isn't defined
 * v0.4.32: Add endpoint to AWS credentials for compatibility with serverless-domain-manager plugin
 * v0.4.31: Fix format of API GW endpoints printed in stack output
