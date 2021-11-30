@@ -459,7 +459,7 @@ class LocalstackPlugin {
    * used, and (2) lambda.mountCode is enabled.
    */
   patchTypeScriptPluginMountedCodeLocation() {
-    if (!this.shouldMountCode() || !this.detectTypescriptPluginType()) {
+    if (!this.shouldMountCode() || !this.detectTypescriptPluginType() || !this.isActive()) {
       return;
     }
     const template = this.serverless.service.provider.compiledCloudFormationTemplate || {};
