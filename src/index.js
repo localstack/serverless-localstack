@@ -41,6 +41,9 @@ class LocalstackPlugin {
     // Add a before hook for aws:common:validate and make sure it is in the very first position
     this.addHookInFirstPosition('before:aws:common:validate:validate', this.beforeEventHook);
 
+    // Add a hook to fix TypeError when accessing undefined state attribute
+    this.addHookInFirstPosition('before:aws:deploy:deploy:checkForChanges', this.beforeDeployCheckForChanges);
+
     this.awsServices = [
       'acm',
       'amplify',
@@ -214,6 +217,14 @@ class LocalstackPlugin {
 
     this.pluginEnabled = true;
     return this.enablePlugin();
+  }
+
+  beforeDeployCheckForChanges() {
+    // patch to avoid "TypeError: reading 'console' of undefined" in plugins/aws/deploy/index.js on Sls v3.17.0+
+    const plugin = this.findPlugin('AwsDeploy');
+    if (plugin) {
+      plugin.state = plugin.state || {};
+    }
   }
 
   enablePlugin() {

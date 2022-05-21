@@ -195,7 +195,8 @@ custom:
 
 ## Change Log
 
-* v0.4.35: Add config option to connect to additional docker networks
+* v0.4.36: Add patch to avoid "TypeError" in AwsDeploy plugin on Serverless v3.4.0+
+* v0.4.35: Add config option to connect to additional Docker networks
 * v0.4.33: Fix parsing StepFunctions endpoint if the endpointInfo isn't defined
 * v0.4.32: Add endpoint to AWS credentials for compatibility with serverless-domain-manager plugin
 * v0.4.31: Fix format of API GW endpoints printed in stack output
