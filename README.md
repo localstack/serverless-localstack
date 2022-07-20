@@ -50,7 +50,7 @@ custom:
       - my_custom_network
     lambda:
       # Enable this flag to improve performance
-      mountCode: True
+      mountCode: true  # specify either "true", or a relative path to the root Lambda mount path
     docker:
       # Enable this flag to run "docker ..." commands as sudo
       sudo: False
@@ -67,10 +67,13 @@ Note the `stages` attribute in the config above. The `serverless-localstack` plu
 
 ### Mounting Lambda code for better performance
 
-Note that the `localstack.lambda.mountCode` flag above will mount the local directory
-into the Docker container that runs the Lambda code in LocalStack. If you remove this
-flag, your Lambda code is deployed in the traditional way which is more in line with
-how things work in AWS, but also comes with a performance penalty: packaging the code,
+Note that the `localstack.lambda.mountCode` flag above will mount the local directory into
+the Docker container that runs the Lambda code in LocalStack. You can either specify the boolean
+value `true` (to mount the project root folder), or a relative path to the root Lambda mount path
+within your project (e.g., `./functions`).
+
+If you remove this flag, your Lambda code is deployed in the traditional way which is more in
+line with how things work in AWS, but also comes with a performance penalty: packaging the code,
 uploading it to the local S3 service, downloading it in the local Lambda API, extracting
 it, and finally copying/mounting it into a Docker container to run the Lambda. Mounting code
 from multiple projects is not supported with simple configuration, and you must use the
@@ -195,6 +198,7 @@ custom:
 
 ## Change Log
 
+* v1.0.0: Allow specifying path for mountCode, to point to a relative Lambda mount path
 * v0.4.36: Add patch to avoid "TypeError" in AwsDeploy plugin on Serverless v3.4.0+
 * v0.4.35: Add config option to connect to additional Docker networks
 * v0.4.33: Fix parsing StepFunctions endpoint if the endpointInfo isn't defined

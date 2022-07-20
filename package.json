@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "0.4.36",
+  "version": "1.0.0",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -18,8 +18,9 @@
     "type": "git",
     "url": "git+ssh://git@github.com/localstack/serverless-localstack"
   },
-  "author": "Waldemar Hummer (whummer)",
+  "author": "LocalStack Team <info@localstack.cloud>",
   "contributors": [
+    "LocalStack Team <info@localstack.cloud>",
     "temyers",
     "Waldemar Hummer (whummer)",
     "Justin McCormick <me@justinmccormick.com>",

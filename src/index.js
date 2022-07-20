@@ -1,6 +1,7 @@
 'use strict';
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const path = require('path');
 const {promisify} = require('es6-promisify');
 const exec = promisify(require('child_process').exec);
 
@@ -169,7 +170,7 @@ class LocalstackPlugin {
     }
 
     // Patch plugin methods
-    this.skipIfMountLambda('Package', 'packageService')
+    this.skipIfMountLambda('Package', 'packageService');
     function compileFunction(functionName) {
       if (!this.shouldMountCode()) {
         return compileFunction._functionOriginal.apply(null, arguments);
@@ -184,6 +185,10 @@ class LocalstackPlugin {
           if (res.Type === 'AWS::Lambda::Function') {
             res.Properties.Code.S3Bucket = '__local__';
             res.Properties.Code.S3Key = process.cwd();
+            const mountCode = this.config.lambda.mountCode;
+            if (typeof mountCode === 'string' && mountCode.toLowerCase() !== 'true') {
+              res.Properties.Code.S3Key = path.join(res.Properties.Code.S3Key, this.config.lambda.mountCode);
+            }
             if (process.env.LAMBDA_MOUNT_CWD) {
               // Allow users to define a custom working directory for Lambda mounts.
               // For example, when deploying a Serverless app in a Linux VM (that runs Docker) on a
@@ -439,7 +444,7 @@ class LocalstackPlugin {
       }
       return containerID;
     }
-    
+
     return getContainer().then(
       (containerID) => {
         if(containerID) {
