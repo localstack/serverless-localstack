@@ -15,6 +15,9 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_TSC = '.build'; //TODO detect from tsconfig.js
 // Plugin naming and build directory of serverless-webpack plugin
 const TS_PLUGIN_WEBPACK = 'ServerlessWebpack'
 const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect from webpack.config.js
+// Plugin naming and build directory of serverless-webpack plugin
+const TS_PLUGIN_ESBUILD = 'EsbuildServerlessPlugin'
+const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect from esbuild.config.js
 
 // Default edge port to use with host
 const DEFAULT_EDGE_PORT = '4566';
@@ -248,6 +251,7 @@ class LocalstackPlugin {
   detectTypescriptPluginType() {
     if (this.findPlugin(TS_PLUGIN_TSC)) return TS_PLUGIN_TSC
     if (this.findPlugin(TS_PLUGIN_WEBPACK)) return TS_PLUGIN_WEBPACK
+    if (this.findPlugin(TS_PLUGIN_ESBUILD)) return TS_PLUGIN_ESBUILD
     return undefined
   }
 
@@ -256,6 +260,7 @@ class LocalstackPlugin {
     const TS_PLUGIN = this.detectTypescriptPluginType()
     if (TS_PLUGIN === TS_PLUGIN_TSC) return TYPESCRIPT_PLUGIN_BUILD_DIR_TSC
     if (TS_PLUGIN === TS_PLUGIN_WEBPACK) return TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK
+    if (TS_PLUGIN === TS_PLUGIN_ESBUILD) return TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD
     return undefined
   }
 
