@@ -87,7 +87,7 @@ localstack start --docker -d \
   -v /path/to/project-b:/path/to/project-b
 ```
 
-If you use either `serverless-webpack` or `serverless-plugin-typescript`, `serverless-localstack`
+If you use either `serverless-webpack`, `serverless-plugin-typescript`, or `serverless-esbuild`, `serverless-localstack`
 will detect it and modify the mount paths to point to your output directory. You will need to invoke
 the build command in order for the mounted code to be updated. (eg: `serverless webpack`). There is no
 `--watch` support for this out of the box, but could be accomplished using nodemon:
@@ -96,7 +96,7 @@ the build command in order for the mounted code to be updated. (eg: `serverless 
 npm i --save-dev nodemon
 ```
 
-`package.json`:
+Webpack example's `package.json`:
 
 ```json
   "scripts": {
