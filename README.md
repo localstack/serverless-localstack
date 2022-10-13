@@ -18,12 +18,13 @@ The easiest way to get started is to install via npm.
 
 ## Configuring
 
-There are two ways to configure the plugin, via a JSON file or via `serverless.yml`.
+The plugin can be configured via `serverless.yml`, or alternatively via environment variables.
+
 There are two supported methods for configuring the endpoints, globally via the
 `host` property, or individually. These properties may be mixed, allowing for
 global override support while also override specific endpoints.
 
-A `host` or individual endpoints must be configured or this plugin will be deactivated.
+A `host` or individual endpoints must be configured, or this plugin will be deactivated.
 
 ### Configuration via serverless.yml
 
@@ -58,6 +59,12 @@ custom:
     local:
       ...
 ```
+
+### Configuration via environment variables
+
+The following environment variables can be configured (taking precedence over the values in `serverless.yml`):
+* `EDGE_PORT`: LocalStack edge port to connect to (default: `4566`)
+* `LOCALSTACK_HOSTNAME`: LocalStack host name to connect to (default: `localhost`)
 
 ### Activating the plugin for certain stages
 
@@ -198,6 +205,7 @@ custom:
 
 ## Change Log
 
+* v1.0.1: Add support for Serverless projects with esbuild source config; enable config via environment variables
 * v1.0.0: Allow specifying path for mountCode, to point to a relative Lambda mount path
 * v0.4.36: Add patch to avoid "TypeError" in AwsDeploy plugin on Serverless v3.4.0+
 * v0.4.35: Add config option to connect to additional Docker networks

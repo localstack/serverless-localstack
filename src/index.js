@@ -536,7 +536,8 @@ class LocalstackPlugin {
   reconfigureAWS() {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
-      const host = this.config.host || 'http://localhost';
+      const hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
+      const host = this.config.host || `http://${hostname}`;
       const edgePort = this.getEdgePort();
       const configChanges = {};
 
@@ -645,7 +646,7 @@ class LocalstackPlugin {
   /** Utility functions below **/
 
   getEdgePort() {
-    return this.config.edgePort || DEFAULT_EDGE_PORT;
+    return process.env.EDGE_PORT || this.config.edgePort || DEFAULT_EDGE_PORT;
   }
 
   getAwsProvider() {
