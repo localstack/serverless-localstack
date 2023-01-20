@@ -37,17 +37,17 @@ jobs:
           docker pull localstack/localstack
           localstack start -d
           localstack wait -t 30
-          
+
       - name: Install deps
         run: |
           npm ci
-          
+
       - name: Run Lint and Test
         run: |
           set -e
           npm run lint
           npm run test
-          
+
       - name: Integration Tests
         run: |
           npm link
