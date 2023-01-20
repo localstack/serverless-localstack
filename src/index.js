@@ -632,12 +632,13 @@ class LocalstackPlugin {
       return Promise.resolve('');
     }
 
-    if (AWS.config[service.toLowerCase()]) {
-      this.debug(`Using custom endpoint for ${service}: ${AWS.config[service.toLowerCase()].endpoint}`);
+    const config = AWS.config[service.toLowerCase()] ? AWS.config : this.getAwsProvider().sdk.config;
+    if (config[service.toLowerCase()]) {
+      this.debug(`Using custom endpoint for ${service}: ${config[service.toLowerCase()].endpoint}`);
 
-      if (AWS.config['s3'] && params.TemplateURL) {
-        this.debug(`Overriding S3 templateUrl to ${AWS.config.s3.endpoint}`);
-        params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, AWS.config['s3'].endpoint);
+      if (config.s3 && params.TemplateURL) {
+        this.debug(`Overriding S3 templateUrl to ${config.s3.endpoint}`);
+        params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, config.s3.endpoint);
       }
     }
 
@@ -668,7 +669,7 @@ class LocalstackPlugin {
     try {
       await socket.connect({ host: hostname, port });
     } catch (e) {
-      if (extractedHostname === 'localhost') {
+      if (hostname === 'localhost') {
         // fall back to using local IPv4 address - to fix IPv6 issue on MacOS
         // see, https://github.com/localstack/serverless-localstack/issues/125
         return "127.0.0.1";
