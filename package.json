@@ -42,7 +42,7 @@
     "fs-extra": "^7.0.0",
     "jasmine": "^3.2.0",
     "json2yaml": "^1.1.0",
-    "nodemon": "^1.18.10",
+    "nodemon": "^2.0.20",
     "rimraf": "^2.6.2",
     "serverless": "^2.30.0",
     "sinon": "^6.2.0",
