@@ -4,7 +4,7 @@ provider:
   name: aws
   profile: ${opt:profile, self:custom.profile}
   stage: ${opt:stage, self:custom.defaultStage}
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   lambdaHashingVersion: '20201221'
 
 plugins:

@@ -205,6 +205,7 @@ custom:
 
 ## Change Log
 
+* v1.0.2: Add check to prevent IPv6 connection issue with `localhost` on MacOS
 * v1.0.1: Add support for Serverless projects with esbuild source config; enable config via environment variables
 * v1.0.0: Allow specifying path for mountCode, to point to a relative Lambda mount path
 * v0.4.36: Add patch to avoid "TypeError" in AwsDeploy plugin on Serverless v3.4.0+

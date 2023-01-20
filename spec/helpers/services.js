@@ -34,10 +34,10 @@ const defaultConfig = {
 
 const installPlugin = (dir) => {
   const pluginsDir = path.join(dir, '.serverless_plugins');
-
   fs.mkdirsSync(pluginsDir);
 
-  execSync(`npm link ${packageJson.name}`, {cwd: dir})
+  execSync(`mkdir -p node_modules`, {cwd: dir});
+  execSync(`ln -s ${__dirname}/../../ node_modules/${packageJson.name}`, {cwd: dir});
 };
 
 const execServerless = (arguments, dir) => {

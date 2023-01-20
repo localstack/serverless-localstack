@@ -2,6 +2,7 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
+const net = require('net');
 const {promisify} = require('es6-promisify');
 const exec = promisify(require('child_process').exec);
 
@@ -533,11 +534,11 @@ class LocalstackPlugin {
   /**
    * Patch the AWS client library to use our local endpoint URLs.
    */
-  reconfigureAWS() {
+  async reconfigureAWS() {
     if(this.isActive()) {
       this.log('Using serverless-localstack');
-      const hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
-      const host = this.config.host || `http://${hostname}`;
+      const hostname = await this.getConnectHostname();
+      const host = `http://${hostname}`;
       const edgePort = this.getEdgePort();
       const configChanges = {};
 
@@ -643,10 +644,40 @@ class LocalstackPlugin {
     return this.awsProviderRequest(service, method, params);
   }
 
-  /** Utility functions below **/
+  /* Utility functions below */
 
   getEdgePort() {
     return process.env.EDGE_PORT || this.config.edgePort || DEFAULT_EDGE_PORT;
+  }
+
+  /**
+   * Determine the target hostname to connect to, as per the configuration.
+   */
+  async getConnectHostname() {
+    const port = this.getEdgePort();
+    var hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
+    if (this.config.host) {
+      hostname = this.config.host;
+      if (hostname.indexOf("://")) {
+        hostname = new URL(hostname).hostname;
+      }
+    }
+
+    // attempt to connect to the given host/port
+    const socket = new net.Socket();
+    try {
+      await socket.connect({ host: hostname, port });
+    } catch (e) {
+      if (extractedHostname === 'localhost') {
+        // fall back to using local IPv4 address - to fix IPv6 issue on MacOS
+        // see, https://github.com/localstack/serverless-localstack/issues/125
+        return "127.0.0.1";
+      }
+    } finally {
+      socket.destroy();
+    }
+
+    return hostname;
   }
 
   getAwsProvider() {
