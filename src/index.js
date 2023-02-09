@@ -1,4 +1,5 @@
 'use strict';
+const AdmZip = require("adm-zip");
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
@@ -731,7 +732,63 @@ class LocalstackPlugin {
       plugin.display = newDisplay;
     }
   }
+  patchCustomResourceLambdaS3ForcePathStyle () {
+    const awsProvider = this.awsProvider;
+    const patchMarker = path.join(
+      awsProvider.serverless.serviceDir,
+      '.serverless',
+      '.internal-custom-resources-patched'
+    );
+    const zipFilePath = path.join(
+      awsProvider.serverless.serviceDir,
+      '.serverless',
+      awsProvider.naming.getCustomResourcesArtifactName()
+    );
 
+    function fileExists (filePath) {
+      try {
+        const stats = fs.statSync(filePath);
+        return stats.isFile();
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function createPatchMarker () {
+      try {
+        fs.open(patchMarker, 'a').close()
+      } catch (err) {
+        return;
+      }
+    }
+
+    if (fileExists(patchMarker)) {
+      this.debug("serverless-localstack: Serverless internal CustomResources already patched")
+      return;
+    }
+
+    const customResourceZipExists = fileExists(zipFilePath)
+
+    if (!customResourceZipExists) {
+      return;
+    }
+
+    const customResources = new AdmZip(zipFilePath);
+    const utilFile = customResources.getEntry('utils.js')
+    if (utilFile == null) return;
+    const data = utilFile.getData().toString()
+    const patch = "AWS.config.s3ForcePathStyle = true;"
+    if (data.includes(patch)) {
+      createPatchMarker()
+      return;
+    }
+    const indexPatch = data.indexOf('AWS.config.logger = console;')
+    const newData = data.slice(0, indexPatch) + patch + '\n' + data.slice(indexPatch)
+    utilFile.setData(newData)
+    customResources.writeZip()
+    createPatchMarker()
+    this.debug('serverless-localstack: Serverless internal CustomResources patched')
+  }
 }
 
 module.exports = LocalstackPlugin;

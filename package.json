@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,8 @@
     "Waldemar Hummer (whummer)",
     "Justin McCormick <me@justinmccormick.com>",
     "djKooks",
-    "yohei1126"
+    "yohei1126",
+    "bentsku"
   ],
   "license": "MIT",
   "bugs": {
@@ -33,6 +34,7 @@
   },
   "homepage": "https://github.com/localstack/serverless-localstack",
   "dependencies": {
+    "adm-zip": "^0.5.10",
     "aws-sdk": "^2.402.0",
     "es6-promisify": "^6.0.1"
   },
