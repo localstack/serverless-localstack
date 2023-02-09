@@ -50,6 +50,10 @@ class LocalstackPlugin {
     // Add a hook to fix TypeError when accessing undefined state attribute
     this.addHookInFirstPosition('before:aws:deploy:deploy:checkForChanges', this.beforeDeployCheckForChanges);
 
+    this.serverless.pluginManager.hooks['package:compileEvents'].push({
+      pluginName: 'LocalstackPlugin', hook: this.patchCustomResourceLambdaS3ForcePathStyle.bind(this)
+    });
+
     this.awsServices = [
       'acm',
       'amplify',
