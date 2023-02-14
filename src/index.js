@@ -670,21 +670,52 @@ class LocalstackPlugin {
       }
     }
 
-    // attempt to connect to the given host/port
-    const socket = new net.Socket();
-    try {
-      await socket.connect({ host: hostname, port });
-    } catch (e) {
-      if (hostname === 'localhost') {
-        // fall back to using local IPv4 address - to fix IPv6 issue on MacOS
-        // see, https://github.com/localstack/serverless-localstack/issues/125
-        return "127.0.0.1";
+    // Fall back to using local IPv4 address if connection to localhost fails.
+    // This workaround transparently handles systems (e.g., macOS) where
+    // localhost resolves to IPv6 when using Nodejs >=v17. See discussion:
+    // https://github.com/localstack/aws-cdk-local/issues/76#issuecomment-1412590519
+    // Issue: https://github.com/localstack/serverless-localstack/issues/125
+    if (hostname === "localhost") {
+      try {
+        const options = { host: hostname, port: port };
+        await this.checkTCPConnection(options);
+      } catch (e) {
+        const fallbackHostname = "127.0.0.1"
+        this.debug(`Reconfiguring hostname to use ${fallbackHostname} (IPv4) because connection to ${hostname} failed`);
+        hostname = fallbackHostname;
       }
-    } finally {
-      socket.destroy();
     }
 
     return hostname;
+  }
+
+  /**
+   * Checks whether a TCP connection to the given "options" can be established.
+   * @param {object} options connection options of net.socket.connect()
+   *                 https://nodejs.org/api/net.html#socketconnectoptions-connectlistener
+   *                 Example: { host: "localhost", port: 4566 }
+   * @returns {Promise} A fulfilled empty promise on successful connection and
+   *                    a rejected promise on any connection error.
+   */
+  async checkTCPConnection(options) {
+    return new Promise((resolve, reject) => {
+      const socket = new net.Socket();
+      const client = socket.connect(options, () => {
+        client.end();
+        resolve();
+      });
+
+      client.setTimeout(500);  // milliseconds
+      client.on("timeout", err => {
+        client.destroy();
+        reject(err);
+      });
+
+      client.on("error", err => {
+        client.destroy();
+        reject(err);
+      });
+    });
   }
 
   getAwsProvider() {
