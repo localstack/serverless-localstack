@@ -205,6 +205,7 @@ custom:
 
 ## Change Log
 
+* v1.0.4: Fix IPv4 fallback check to prevent IPv6 connection issue with `localhost` on macOS
 * v1.0.3: Set S3 Path addressing for internal Serverless Custom Resources - allow configuring S3 Events Notification for functions
 * v1.0.2: Add check to prevent IPv6 connection issue with `localhost` on MacOS
 * v1.0.1: Add support for Serverless projects with esbuild source config; enable config via environment variables
