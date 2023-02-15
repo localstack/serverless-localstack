@@ -24,6 +24,9 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect fro
 // Default edge port to use with host
 const DEFAULT_EDGE_PORT = '4566';
 
+// Cache hostname to avoid unnecessary connection checks
+var resolvedHostname = undefined;
+
 class LocalstackPlugin {
   constructor(serverless, options) {
 
@@ -661,7 +664,11 @@ class LocalstackPlugin {
    * Determine the target hostname to connect to, as per the configuration.
    */
   async getConnectHostname() {
-    const port = this.getEdgePort();
+    if (resolvedHostname) {
+      // Use cached hostname to avoid repeated connection checks
+      return resolvedHostname;
+    }
+
     var hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
     if (this.config.host) {
       hostname = this.config.host;
@@ -677,6 +684,7 @@ class LocalstackPlugin {
     // Issue: https://github.com/localstack/serverless-localstack/issues/125
     if (hostname === "localhost") {
       try {
+        const port = this.getEdgePort();
         const options = { host: hostname, port: port };
         await this.checkTCPConnection(options);
       } catch (e) {
@@ -686,6 +694,8 @@ class LocalstackPlugin {
       }
     }
 
+    // Cache resolved hostname
+    resolvedHostname = hostname;
     return hostname;
   }
 
