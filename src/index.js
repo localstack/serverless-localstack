@@ -697,7 +697,7 @@ class LocalstackPlugin {
    * @returns {Promise} A fulfilled empty promise on successful connection and
    *                    a rejected promise on any connection error.
    */
-  async checkTCPConnection(options) {
+  checkTCPConnection(options) {
     return new Promise((resolve, reject) => {
       const socket = new net.Socket();
       const client = socket.connect(options, () => {
