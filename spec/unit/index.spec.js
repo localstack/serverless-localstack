@@ -5,12 +5,8 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
 const Serverless = require('serverless')
-let AwsProvider;
-try {
-  AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
-} catch (e) {
-  AwsProvider = require('serverless/lib/plugins/aws/provider');
-}
+const AwsProvider = require('serverless/lib/plugins/aws/provider');
+const { log, progress } = require('@serverless/utils/log');
 
 chai.use(require('chai-string'));
 
@@ -32,7 +28,10 @@ describe("LocalstackPlugin", () => {
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    serverless = new Serverless();
+    serverless = new Serverless({
+      commands: ["print"],
+      options: {},
+    });
     awsProvider = new AwsProvider(serverless, {});
     awsConfig = new AWS.Config();
     AWS.config = awsConfig;
@@ -64,7 +63,7 @@ describe("LocalstackPlugin", () => {
     describe('with empty configuration', () => {
       beforeEach(async () => {
         serverless.service.custom = {};
-        instance = new LocalstackPlugin(serverless, defaultPluginState);
+        instance = new LocalstackPlugin(serverless, defaultPluginState, { log, progress });
         await simulateBeforeDeployHooks(instance);
       });
 
@@ -82,14 +81,14 @@ describe("LocalstackPlugin", () => {
         serverless.service.custom = {
           localstack: {}
         };
-        instance = new LocalstackPlugin(serverless, defaultPluginState);
+        instance = new LocalstackPlugin(serverless, defaultPluginState, { log, progress });
         await simulateBeforeDeployHooks(instance);
       });
 
       it('should not set the endpoints if the stages config option does not include the deployment stage', async () => {
           serverless.service.custom.localstack.stages = ['production'];
 
-          let plugin = new LocalstackPlugin(serverless, defaultPluginState);
+          let plugin = new LocalstackPlugin(serverless, defaultPluginState, { log, progress });
           await simulateBeforeDeployHooks(plugin);
           expect(plugin.endpoints).to.be.empty;
       });
@@ -97,7 +96,7 @@ describe("LocalstackPlugin", () => {
       it('should set the endpoints if the stages config option includes the deployment stage', async () => {
         serverless.service.custom.localstack.stages = ['production', 'staging'];
 
-        let plugin = new LocalstackPlugin(serverless, {'stage':'production'})
+        let plugin = new LocalstackPlugin(serverless, {'stage':'production'}, { log, progress })
         await simulateBeforeDeployHooks(plugin);
 
         expect(plugin.config.stages).to.deep.equal(['production','staging']);
@@ -111,7 +110,7 @@ describe("LocalstackPlugin", () => {
         }
 
         let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'production'});
+          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'production'}, { log, progress });
           pluginInstance.readConfig();
         }
 
@@ -125,7 +124,7 @@ describe("LocalstackPlugin", () => {
         }
 
         let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'staging'});
+          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'staging'}, { log, progress });
           pluginInstance.readConfig();
         }
 
@@ -137,7 +136,7 @@ describe("LocalstackPlugin", () => {
           endpointFile: 'README.md'
         }
         let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
+          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState, { log, progress });
           pluginInstance.readConfig();
         }
         expect(plugin).to.throw(/Endpoint file "README.md" is invalid:/)
@@ -168,7 +167,7 @@ describe("LocalstackPlugin", () => {
     it('should overwrite the S3 hostname', async () => {
       const pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
       const request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, defaultPluginState);
+      instance = new LocalstackPlugin(serverless, defaultPluginState, { log, progress });
       await simulateBeforeDeployHooks(instance);
 
       awsProvider.request('s3', 'foo', {
@@ -181,7 +180,7 @@ describe("LocalstackPlugin", () => {
 
     it('should not send validateTemplate calls to localstack', async () => {
       const request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, defaultPluginState)
+      instance = new LocalstackPlugin(serverless, defaultPluginState, { log, progress })
       await simulateBeforeDeployHooks(instance);
 
       awsProvider.request('S3', 'validateTemplate', {});

@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const net = require('net');
-const {promisify} = require('es6-promisify');
+const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 
 // Default stage used by Serverless
@@ -28,10 +28,12 @@ const DEFAULT_EDGE_PORT = '4566';
 var resolvedHostname = undefined;
 
 class LocalstackPlugin {
-  constructor(serverless, options) {
+  constructor(serverless, options, { log, progress }) {
 
     this.serverless = serverless;
     this.options = options;
+    this.log = log;
+    this.progress = progress;
 
     this.hooks = {};
     // Define a before-hook for all event types
@@ -282,11 +284,11 @@ class LocalstackPlugin {
   skipIfMountLambda(pluginName, functionName, overrideFunction, hookNames) {
     const plugin = this.findPlugin(pluginName);
     if (!plugin) {
-      this.log('Warning: Unable to find plugin named: ' + pluginName)
+      this.log.warning(`Unable to find plugin named: ${pluginName}`)
       return;
     }
     if (!plugin[functionName]) {
-      this.log(`Unable to find function ${functionName} on plugin ${pluginName}`)
+      this.log.error(`Unable to find function ${functionName} on plugin ${pluginName}`)
       return;
     }
     const functionOriginal = plugin[functionName].bind(plugin);
@@ -294,7 +296,7 @@ class LocalstackPlugin {
     function overrideFunctionDefault() {
       if (this.shouldMountCode()) {
         const fqn = pluginName + '.' + functionName;
-        this.log('Skip plugin function ' + fqn + ' (lambda.mountCode flag is enabled)');
+        this.log.info(`Skip plugin function ${fqn} (lambda.mountCode flag is enabled)`);
         return Promise.resolve();
       }
       return functionOriginal.apply(null, arguments);
@@ -379,11 +381,11 @@ class LocalstackPlugin {
   getStageVariable() {
     const customConfig = this.serverless.service.custom || {};
     const providerConfig = this.serverless.service.provider || {};
-    this.debug('config.options_stage: ' + this.config.options_stage);
-    this.debug('serverless.service.custom.stage: ' + customConfig.stage);
-    this.debug('serverless.service.provider.stage: ' + providerConfig.stage);
+    this.log.debug(`config.options_stage: ${this.config.options_stage}`);
+    this.log.debug(`serverless.service.custom.stage: ${customConfig.stage}`);
+    this.log.debug(`serverless.service.provider.stage: ${providerConfig.stage}`);
     this.config.stage = this.config.options_stage || customConfig.stage || providerConfig.stage;
-    this.debug('config.stage: ' + this.config.stage);
+    this.log.debug(`config.stage: ${this.config.stage}`);
   }
 
   fixOutputEndpoints() {
@@ -421,8 +423,8 @@ class LocalstackPlugin {
 
     const getContainer = () => {
       return exec('docker ps').then(
-        (stdout) => {
-          const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0 || line.indexOf('localstack_localstack') >= 0);
+        (result) => {
+          const exists = result.stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0 || line.indexOf('localstack_localstack') >= 0);
           if (exists.length) {
             return exists[0].replace('\t', ' ').split(' ')[0];
           }
@@ -432,31 +434,36 @@ class LocalstackPlugin {
 
     const dockerStartupTimeoutMS = 1000 * 60 * 2;
 
-    const checkStatus = (containerID, timeout) => {
+    const checkStatus = (containerID, progress, timeout) => {
       timeout = timeout || Date.now() + dockerStartupTimeoutMS;
       if (Date.now() > timeout) {
-        this.log('Warning: Timeout when checking state of LocalStack container');
+        progress.update('Timeout when checking state of LocalStack container');
+        progress.remove();
         return;
       }
       return this.sleep(4000).then(() => {
-        this.log(`Checking state of LocalStack container ${containerID}`)
+        progress.update(`Checking state of LocalStack container ${containerID}`)
         return exec(`docker logs "${containerID}"`).then(
-          (logs) => {
-            const ready = logs.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
+          (result) => {
+            const ready = result.stdout.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
+            progress.update(`Localstack container ${containerID} is ready`)
+            progress.remove();
             if (ready.length) {
               return Promise.resolve();
             }
-            return checkStatus(containerID, timeout);
+            return checkStatus(containerID, progress, timeout);
           }
         );
       });
     }
 
-    const addNetworks = async (containerID) => {
+    const addNetworks = async (containerID, progress) => {
       if(this.config.networks) {
+        progress.update(`Configuring networks for Localstack container ${containerID}`)
         for(var network in this.config.networks) {
           await exec(`docker network connect "${this.config.networks[network]}" ${containerID}`);
         }
+        progress.update('Network configuration is complete!')
       }
       return containerID;
     }
@@ -466,10 +473,11 @@ class LocalstackPlugin {
         if(containerID) {
           return;
         }
-        this.log('Starting LocalStack in Docker. This can take a while.');
+        const runProgress = this.progress.create({
+          message: 'Starting LocalStack in Docker. This can take a while.',
+        });
         const cwd = process.cwd();
         const env = this.clone(process.env);
-        env.DEBUG = '1';
         env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
         env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
         env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
@@ -480,8 +488,8 @@ class LocalstackPlugin {
         }
         const options = {env: env, maxBuffer};
         return exec('localstack start', options).then(getContainer)
-          .then((containerID) => addNetworks(containerID))
-          .then((containerID) => checkStatus(containerID));
+          .then((containerID) => addNetworks(containerID, runProgress))
+          .then((containerID) => checkStatus(containerID, runProgress));
       }
     );
   }
@@ -571,10 +579,10 @@ class LocalstackPlugin {
   /**
    * Patch the AWS client library to use our local endpoint URLs.
    */
-  async reconfigureAWS() {
+  reconfigureAWS() {
     if(this.isActive()) {
-      this.log('Using serverless-localstack');
-      const hostname = await this.getConnectHostname();
+      this.log.info('Using serverless-localstack');
+      const hostname = this.getConnectHostname();
       const host = `http://${hostname}`;
       const edgePort = this.getEdgePort();
       const configChanges = {};
@@ -600,7 +608,7 @@ class LocalstackPlugin {
       for (const service of this.awsServices) {
         const serviceLower = service.toLowerCase();
 
-        this.debug(`Reconfiguring service ${service} to use ${localEndpoint}`);
+        this.log.debug(`Reconfiguring service ${service} to use ${localEndpoint}`);
         configChanges[serviceLower] = { endpoint: localEndpoint };
 
         if (serviceLower == 's3') {
@@ -614,7 +622,7 @@ class LocalstackPlugin {
           const url = this.endpoints[service];
           const serviceLower = service.toLowerCase();
 
-          this.debug(`Reconfiguring service ${service} to use ${url}`);
+          this.log.debug(`Reconfiguring service ${service} to use ${url}`);
           configChanges[serviceLower] = configChanges[serviceLower] || {};
           configChanges[serviceLower].endpoint = url;
         }
@@ -629,7 +637,7 @@ class LocalstackPlugin {
     }
     else {
       this.endpoints = {}
-      this.log("Skipping serverless-localstack:\ncustom.localstack.stages: " +
+      this.log.info("Skipping serverless-localstack:\ncustom.localstack.stages: " +
         JSON.stringify(this.config.stages) + "\nstage: " + this.config.stage
       )
     }
@@ -641,7 +649,7 @@ class LocalstackPlugin {
   loadEndpointsFromDisk(endpointFile) {
     let endpointJson;
 
-    this.debug('Loading endpointJson from ' + endpointFile);
+    this.log.debug('Loading endpointJson from ' + endpointFile);
 
     try {
       endpointJson = JSON.parse( fs.readFileSync(endpointFile) );
@@ -650,7 +658,7 @@ class LocalstackPlugin {
     }
 
     for (const key of Object.keys(endpointJson)) {
-      this.debug('Intercepting service ' + key);
+      this.log.debug('Intercepting service ' + key);
       this.endpoints[key] = endpointJson[key];
     }
   }
@@ -665,16 +673,16 @@ class LocalstackPlugin {
 
     // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
-      this.log('Skipping template validation: Unsupported in Localstack');
+      this.log.info('Skipping template validation: Unsupported in Localstack');
       return Promise.resolve('');
     }
 
     const config = AWS.config[service.toLowerCase()] ? AWS.config : this.getAwsProvider().sdk.config;
     if (config[service.toLowerCase()]) {
-      this.debug(`Using custom endpoint for ${service}: ${config[service.toLowerCase()].endpoint}`);
+      this.log.debug(`Using custom endpoint for ${service}: ${config[service.toLowerCase()].endpoint}`);
 
       if (config.s3 && params.TemplateURL) {
-        this.debug(`Overriding S3 templateUrl to ${config.s3.endpoint}`);
+        this.log.debug(`Overriding S3 templateUrl to ${config.s3.endpoint}`);
         params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, config.s3.endpoint);
       }
     }
@@ -691,7 +699,7 @@ class LocalstackPlugin {
   /**
    * Determine the target hostname to connect to, as per the configuration.
    */
-  async getConnectHostname() {
+  getConnectHostname() {
     if (resolvedHostname) {
       // Use cached hostname to avoid repeated connection checks
       return resolvedHostname;
@@ -714,10 +722,10 @@ class LocalstackPlugin {
       try {
         const port = this.getEdgePort();
         const options = { host: hostname, port: port };
-        await this.checkTCPConnection(options);
+        this.checkTCPConnection(options);
       } catch (e) {
         const fallbackHostname = "127.0.0.1"
-        this.debug(`Reconfiguring hostname to use ${fallbackHostname} (IPv4) because connection to ${hostname} failed`);
+        this.log.debug(`Reconfiguring hostname to use ${fallbackHostname} (IPv4) because connection to ${hostname} failed`);
         hostname = fallbackHostname;
       }
     }
@@ -736,24 +744,44 @@ class LocalstackPlugin {
    *                    a rejected promise on any connection error.
    */
   checkTCPConnection(options) {
-    return new Promise((resolve, reject) => {
-      const socket = new net.Socket();
-      const client = socket.connect(options, () => {
-        client.end();
-        resolve();
+    let waitForConnectionTask = () =>
+      new Promise((resolve, reject) => {
+        const socket = new net.Socket();
+        const client = socket.connect(options, () => {
+          client.end();
+          resolve();
+        });
+
+        client.setTimeout(500);  // milliseconds
+        client.on("timeout", err => {
+          client.destroy();
+          reject(err);
+        });
+
+        client.on("error", err => {
+          client.destroy();
+          reject(err);
+        });
       });
 
-      client.setTimeout(500);  // milliseconds
-      client.on("timeout", err => {
-        client.destroy();
-        reject(err);
-      });
+    let waitForAsync = fn => {
+      let iterator = fn();
+      let loop = result => {
+        !result.done && result.value.then(
+          res => loop(iterator.next(res)),
+          err => loop(iterator.throw(err))
+        )
+      }
+      loop(iterator.next());
+    }
 
-      client.on("error", err => {
-        client.destroy();
-        reject(err);
-      });
-    });
+    waitForAsync(function* () {
+      try {
+        yield waitForConnectionTask(options);
+      } catch (e) {
+        return;
+      }
+    }) 
   }
 
   getAwsProvider() {
@@ -764,18 +792,6 @@ class LocalstackPlugin {
   getServiceURL() {
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
     return `${proto}://localhost:${this.getEdgePort()}`;
-  }
-
-  log(msg) {
-    if (this.serverless.cli) {
-      this.serverless.cli.log.call(this.serverless.cli, msg);
-    }
-  }
-
-  debug(msg) {
-    if (this.config.debug) {
-      this.log(msg);
-    }
   }
 
   sleep(millis) {
@@ -837,7 +853,7 @@ class LocalstackPlugin {
     }
 
     if (fileExists(patchMarker)) {
-      this.debug("serverless-localstack: Serverless internal CustomResources already patched")
+      this.log.debug("serverless-localstack: Serverless internal CustomResources already patched")
       return;
     }
 
@@ -861,7 +877,7 @@ class LocalstackPlugin {
     utilFile.setData(newData)
     customResources.writeZip()
     createPatchMarker()
-    this.debug('serverless-localstack: Serverless internal CustomResources patched')
+    this.log.debug('serverless-localstack: Serverless internal CustomResources patched')
   }
 }
 
