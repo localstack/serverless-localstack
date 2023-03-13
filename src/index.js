@@ -446,7 +446,7 @@ class LocalstackPlugin {
         return exec(`docker logs "${containerID}"`).then(
           (result) => {
             const ready = result.stdout.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
-            progress.update(`Localstack container ${containerID} is ready`)
+            progress.update(`LocalStack container ${containerID} is ready`)
             progress.remove();
             if (ready.length) {
               return Promise.resolve();
