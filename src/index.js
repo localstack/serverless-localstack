@@ -3,7 +3,6 @@ const AdmZip = require("adm-zip");
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
-const net = require('net');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 
@@ -719,69 +718,12 @@ class LocalstackPlugin {
     // https://github.com/localstack/aws-cdk-local/issues/76#issuecomment-1412590519
     // Issue: https://github.com/localstack/serverless-localstack/issues/125
     if (hostname === "localhost") {
-      try {
-        const port = this.getEdgePort();
-        const options = { host: hostname, port: port };
-        this.checkTCPConnection(options);
-      } catch (e) {
-        const fallbackHostname = "127.0.0.1"
-        this.log.debug(`Reconfiguring hostname to use ${fallbackHostname} (IPv4) because connection to ${hostname} failed`);
-        hostname = fallbackHostname;
-      }
+      hostname = "127.0.0.1";
     }
 
     // Cache resolved hostname
     resolvedHostname = hostname;
     return hostname;
-  }
-
-  /**
-   * Checks whether a TCP connection to the given "options" can be established.
-   * @param {object} options connection options of net.socket.connect()
-   *                 https://nodejs.org/api/net.html#socketconnectoptions-connectlistener
-   *                 Example: { host: "localhost", port: 4566 }
-   * @returns {Promise} A fulfilled empty promise on successful connection and
-   *                    a rejected promise on any connection error.
-   */
-  checkTCPConnection(options) {
-    let waitForConnectionTask = () =>
-      new Promise((resolve, reject) => {
-        const socket = new net.Socket();
-        const client = socket.connect(options, () => {
-          client.end();
-          resolve();
-        });
-
-        client.setTimeout(500);  // milliseconds
-        client.on("timeout", err => {
-          client.destroy();
-          reject(err);
-        });
-
-        client.on("error", err => {
-          client.destroy();
-          reject(err);
-        });
-      });
-
-    let waitForAsync = fn => {
-      let iterator = fn();
-      let loop = result => {
-        !result.done && result.value.then(
-          res => loop(iterator.next(res)),
-          err => loop(iterator.throw(err))
-        )
-      }
-      loop(iterator.next());
-    }
-
-    waitForAsync(function* () {
-      try {
-        yield waitForConnectionTask(options);
-      } catch (e) {
-        return;
-      }
-    }) 
   }
 
   getAwsProvider() {

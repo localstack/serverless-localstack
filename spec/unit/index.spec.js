@@ -175,7 +175,7 @@ describe("LocalstackPlugin", () => {
       });
       expect(request.called).to.be.true;
       let templateUrl = request.firstCall.args[2].TemplateURL;
-      expect(templateUrl).to.startsWith(`${config.host}`);
+      expect(templateUrl).to.startsWith(`http://127.0.0.1`);
     });
 
     it('should not send validateTemplate calls to localstack', async () => {
