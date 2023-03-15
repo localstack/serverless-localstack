@@ -672,7 +672,7 @@ class LocalstackPlugin {
     var hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
     if (this.config.host) {
       hostname = this.config.host;
-      if (hostname.indexOf("://")) {
+      if (hostname.indexOf("://") !== -1) {
         hostname = new URL(hostname).hostname;
       }
     }
