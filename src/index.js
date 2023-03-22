@@ -253,6 +253,7 @@ class LocalstackPlugin {
       () => {
           this.patchServerlessSecrets();
           this.patchS3BucketLocationResponse();
+          this.patchS3CreateBucketLocationConstraint();
       }
     );
   }
