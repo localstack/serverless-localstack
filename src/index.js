@@ -528,6 +528,33 @@ class LocalstackPlugin {
   }
 
   /**
+  * Patch S3 createBucket invocation to not add a LocationContraint if the region is `us-east-1`
+  * The default SDK check was against endpoint and not the region directly.
+  */
+  patchS3CreateBucketLocationConstraint () {
+    AWS.util.update(AWS.S3.prototype, {
+      createBucket: function createBucket (params, callback) {
+        // When creating a bucket *outside* the classic region, the location
+        // constraint must be set for the bucket and it must match the endpoint.
+        // This chunk of code will set the location constraint param based
+        // on the region (when possible), but it will not override a passed-in
+        // location constraint.
+        if (typeof params === 'function' || !params) {
+          callback = callback || params;
+          params = {};
+        }
+        // copy params so that appending keys does not unintentioinallly
+        // mutate params object argument passed in by user
+        var copiedParams = AWS.util.copy(params);
+        if (this.config.region !== 'us-east-1' && !params.CreateBucketConfiguration) {
+          copiedParams.CreateBucketConfiguration = { LocationConstraint: this.config.region };
+        }
+        return this.makeRequest('createBucket', copiedParams, callback);
+      }
+    })
+  }
+
+  /**
    * Patch the "serverless-secrets" plugin (if enabled) to use the local SSM service endpoint
    */
   patchServerlessSecrets() {
