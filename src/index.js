@@ -544,7 +544,7 @@ class LocalstackPlugin {
           callback = callback || params;
           params = {};
         }
-        // copy params so that appending keys does not unintentioinallly
+        // copy params so that appending keys does not unintentionallly
         // mutate params object argument passed in by user
         var copiedParams = AWS.util.copy(params);
         if (this.config.region !== 'us-east-1' && !params.CreateBucketConfiguration) {
