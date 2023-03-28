@@ -150,6 +150,7 @@ custom:
    see [LocalStack repo](https://github.com/localstack/localstack)
 * `LAMBDA_REMOTE_DOCKER`: Whether to assume that we're running Lambda containers against
    a remote Docker daemon (default `false`) - see [LocalStack repo](https://github.com/localstack/localstack)
+* `BUCKET_MARKER_LOCAL`: Magic S3 bucket name for Lambda mount and [Hot Reloading](https://docs.localstack.cloud/user-guide/tools/lambda-tools/hot-reloading/).
 
 ### Only enable serverless-localstack for the listed stages
 * ```serverless deploy --stage local``` would deploy to LocalStack.
@@ -205,6 +206,7 @@ custom:
 
 ## Change Log
 
+* v1.0.6: Add `BUCKET_MARKER_LOCAL` configuration for customizing S3 bucket for lambda mount and [Hot Reloading](https://docs.localstack.cloud/user-guide/tools/lambda-tools/hot-reloading/).
 * v1.0.5: Fix S3 Bucket LocationConstraint issue when the provider region is `us-east-1`
 * v1.0.4: Fix IPv4 fallback check to prevent IPv6 connection issue with `localhost` on macOS
 * v1.0.3: Set S3 Path addressing for internal Serverless Custom Resources - allow configuring S3 Events Notification for functions
