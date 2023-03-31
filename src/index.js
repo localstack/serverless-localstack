@@ -197,7 +197,8 @@ class LocalstackPlugin {
         Object.keys(resources).forEach(id => {
           const res = resources[id];
           if (res.Type === 'AWS::Lambda::Function') {
-            res.Properties.Code.S3Bucket = '__local__';
+            // TODO: change the default BUCKET_MARKER_LOCAL to 'hot-reload'
+            res.Properties.Code.S3Bucket = process.env.BUCKET_MARKER_LOCAL || '__local__'; // for now, the default is still __local__
             res.Properties.Code.S3Key = process.cwd();
             const mountCode = this.config.lambda.mountCode;
             if (typeof mountCode === 'string' && mountCode.toLowerCase() !== 'true') {
