@@ -151,14 +151,13 @@ class LocalstackPlugin {
       }
     }
   }
-
   addHookInFirstPosition(eventName, hookFunction) {
     this.serverless.pluginManager.hooks[eventName] = this.serverless.pluginManager.hooks[eventName] || [];
     this.serverless.pluginManager.hooks[eventName].unshift(
       { pluginName: 'LocalstackPlugin', hook: hookFunction.bind(this, eventName) });
   }
 
-  activatePlugin(preHooks) {
+  async activatePlugin(preHooks) {
     this.readConfig(preHooks);
 
     if (this.pluginActivated || !this.isActive()) {
@@ -174,7 +173,7 @@ class LocalstackPlugin {
 
     // Reconfigure AWS clients
     try {
-      this.reconfigureAWS();
+      await this.reconfigureAWS();
     } catch (e) {
       // This can happen if we are executing in the plugin initialization context and
       // the template variables have not been fully initialized yet
@@ -196,8 +195,7 @@ class LocalstackPlugin {
         Object.keys(resources).forEach(id => {
           const res = resources[id];
           if (res.Type === 'AWS::Lambda::Function') {
-            // TODO: change the default BUCKET_MARKER_LOCAL to 'hot-reload'
-            res.Properties.Code.S3Bucket = process.env.BUCKET_MARKER_LOCAL || '__local__'; // for now, the default is still __local__
+            res.Properties.Code.S3Bucket = process.env.BUCKET_MARKER_LOCAL || 'hot-reload';
             res.Properties.Code.S3Key = process.cwd();
             const mountCode = this.config.lambda.mountCode;
             if (typeof mountCode === 'string' && mountCode.toLowerCase() !== 'true') {
@@ -227,12 +225,12 @@ class LocalstackPlugin {
     this.pluginActivated = true;
   }
 
-  beforeEventHook() {
+  async beforeEventHook() {
     if (this.pluginEnabled) {
       return Promise.resolve();
     }
 
-    this.activatePlugin();
+    await this.activatePlugin();
 
     this.pluginEnabled = true;
     return this.enablePlugin();
@@ -656,13 +654,13 @@ class LocalstackPlugin {
     }
   }
 
-  interceptRequest(service, method, params) {
+  async interceptRequest(service, method, params) {
 
     // Enable the plugin here, if not yet enabled (the function call below is idempotent).
     // TODO: It seems that we can potentially remove the hooks / plugin loading logic
     //    entirely and only rely on activating the -> we should evaluate this, as it would
     //    substantially simplify the code in this file.
-    this.beforeEventHook();
+    await this.beforeEventHook();
 
     // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
