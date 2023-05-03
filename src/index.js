@@ -32,8 +32,7 @@ class LocalstackPlugin {
 
     this.serverless = serverless;
     this.options = options;
-
-    this.hooks = {};
+    this.hooks = {'initialize': () => this.init()};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
       const doAdd = event.startsWith('before:');
@@ -150,6 +149,11 @@ class LocalstackPlugin {
           + 'Set custom.webpack.keepOutputDirectory to true.');
       }
     }
+  }
+
+  async init() {
+    this.activatePlugin()
+    await this.reconfigureAWS()
   }
 
   addHookInFirstPosition(eventName, hookFunction) {
@@ -574,6 +578,10 @@ class LocalstackPlugin {
    */
   async reconfigureAWS() {
     if(this.isActive()) {
+      if(this.reconfigured_endpoints){
+        this.debug("Skipping reconfiguring of endpoints (already reconfigured)")
+        return;
+      }
       this.log('Using serverless-localstack');
       const hostname = await this.getConnectHostname();
       const host = `http://${hostname}`;
@@ -627,6 +635,8 @@ class LocalstackPlugin {
         // required for compatibility with certain plugin, e.g., serverless-domain-manager
         awsProvider.cachedCredentials.endpoint = localEndpoint;
       }
+      this.log("serverless-localstack: Reconfigured endpoints")
+      this.reconfigured_endpoints = true;
     }
     else {
       this.endpoints = {}
@@ -656,14 +666,13 @@ class LocalstackPlugin {
     }
   }
 
-  interceptRequest(service, method, params) {
+  async interceptRequest(service, method, params) {
 
     // Enable the plugin here, if not yet enabled (the function call below is idempotent).
     // TODO: It seems that we can potentially remove the hooks / plugin loading logic
     //    entirely and only rely on activating the -> we should evaluate this, as it would
     //    substantially simplify the code in this file.
     this.beforeEventHook();
-
     // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
       this.log('Skipping template validation: Unsupported in Localstack');
@@ -679,6 +688,7 @@ class LocalstackPlugin {
         params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, config.s3.endpoint);
       }
     }
+    await this.reconfigureAWS();
 
     return this.awsProviderRequest(service, method, params);
   }
