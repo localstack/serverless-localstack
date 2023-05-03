@@ -32,7 +32,7 @@ describe("LocalstackPlugin", () => {
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    serverless = new Serverless();
+    serverless = new Serverless({commands: ['deploy'], options: {}});
     awsProvider = new AwsProvider(serverless, {});
     awsConfig = new AWS.Config();
     AWS.config = awsConfig;
