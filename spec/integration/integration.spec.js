@@ -27,10 +27,9 @@ describe('LocalstackPlugin', () => {
     // return promise here because ssm.putParameter is async
     return new Promise((resolve, reject) => {
       // create SSM parameter that will be used for the setup
-      ssm.putParameter(params, function(err, data) { 
+      ssm.putParameter(params, function(err, data) { // eslint-disable-line
         if (err) {
           reject(err);
-          console.log(err, err.stack);
         } else {
           // if successful: create the actual service
           self.service = services.createService({});
