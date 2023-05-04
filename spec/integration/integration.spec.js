@@ -10,6 +10,11 @@ AWS.config.update({
   region: 'us-east-1',
   endpoint: 'http://localhost:4566'
 });
+AWS.config.credentials = new AWS.Credentials({
+  accessKeyId: 'test',
+  secretAccessKey: 'test',
+});
+
 const ssm = new AWS.SSM();
 
 const params = {
