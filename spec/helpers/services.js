@@ -14,7 +14,10 @@ const defaultConfig = {
   provider: {
     name: 'aws',
     runtime: 'nodejs12.x',
-    lambdaHashingVersion: '20201221'
+    lambdaHashingVersion: '20201221',
+    environment: {
+        LAMBDA_STAGE: '${ssm:/${opt:stage, self:provider.stage}/lambda/common/LAMBDA_STAGE}'
+      }
   },
   plugins: [
     'serverless-localstack'
