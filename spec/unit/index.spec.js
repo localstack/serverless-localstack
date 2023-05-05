@@ -184,7 +184,7 @@ describe("LocalstackPlugin", () => {
       instance = new LocalstackPlugin(serverless, defaultPluginState)
       await simulateBeforeDeployHooks(instance);
 
-      awsProvider.request('S3', 'validateTemplate', {});
+      await awsProvider.request('S3', 'validateTemplate', {});
 
       expect(request.called).to.be.false;
     });
