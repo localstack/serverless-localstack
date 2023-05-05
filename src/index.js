@@ -32,8 +32,7 @@ class LocalstackPlugin {
 
     this.serverless = serverless;
     this.options = options;
-
-    this.hooks = {};
+    this.hooks = {'initialize': () => this.init()};
     // Define a before-hook for all event types
     for (let event in this.serverless.pluginManager.hooks) {
       const doAdd = event.startsWith('before:');
@@ -152,6 +151,10 @@ class LocalstackPlugin {
     }
   }
 
+  async init() {
+    await this.reconfigureAWS()
+  }
+
   addHookInFirstPosition(eventName, hookFunction) {
     this.serverless.pluginManager.hooks[eventName] = this.serverless.pluginManager.hooks[eventName] || [];
     this.serverless.pluginManager.hooks[eventName].unshift(
@@ -172,16 +175,6 @@ class LocalstackPlugin {
       awsProvider.request = this.interceptRequest.bind(this);
     }
 
-    // Reconfigure AWS clients
-    try {
-      this.reconfigureAWS();
-    } catch (e) {
-      // This can happen if we are executing in the plugin initialization context and
-      // the template variables have not been fully initialized yet
-      // (e.g., "Error: Profile ${self:custom.stage}Profile does not exist")
-      return;
-    }
-
     // Patch plugin methods
     this.skipIfMountLambda('Package', 'packageService');
     function compileFunction(functionName) {
@@ -196,8 +189,7 @@ class LocalstackPlugin {
         Object.keys(resources).forEach(id => {
           const res = resources[id];
           if (res.Type === 'AWS::Lambda::Function') {
-            // TODO: change the default BUCKET_MARKER_LOCAL to 'hot-reload'
-            res.Properties.Code.S3Bucket = process.env.BUCKET_MARKER_LOCAL || '__local__'; // for now, the default is still __local__
+            res.Properties.Code.S3Bucket = process.env.BUCKET_MARKER_LOCAL || 'hot-reload'; // default changed to 'hot-reload' with LS v2 release
             res.Properties.Code.S3Key = process.cwd();
             const mountCode = this.config.lambda.mountCode;
             if (typeof mountCode === 'string' && mountCode.toLowerCase() !== 'true') {
@@ -574,6 +566,10 @@ class LocalstackPlugin {
    */
   async reconfigureAWS() {
     if(this.isActive()) {
+      if(this.reconfiguredEndpoints){
+        this.debug("Skipping reconfiguring of endpoints (already reconfigured)")
+        return;
+      }
       this.log('Using serverless-localstack');
       const hostname = await this.getConnectHostname();
       const host = `http://${hostname}`;
@@ -627,6 +623,8 @@ class LocalstackPlugin {
         // required for compatibility with certain plugin, e.g., serverless-domain-manager
         awsProvider.cachedCredentials.endpoint = localEndpoint;
       }
+      this.log("serverless-localstack: Reconfigured endpoints")
+      this.reconfiguredEndpoints = true;
     }
     else {
       this.endpoints = {}
@@ -656,14 +654,13 @@ class LocalstackPlugin {
     }
   }
 
-  interceptRequest(service, method, params) {
+  async interceptRequest(service, method, params) {
 
     // Enable the plugin here, if not yet enabled (the function call below is idempotent).
     // TODO: It seems that we can potentially remove the hooks / plugin loading logic
     //    entirely and only rely on activating the -> we should evaluate this, as it would
     //    substantially simplify the code in this file.
     this.beforeEventHook();
-
     // Template validation is not supported in LocalStack
     if (method == "validateTemplate") {
       this.log('Skipping template validation: Unsupported in Localstack');
@@ -679,6 +676,7 @@ class LocalstackPlugin {
         params.TemplateURL = params.TemplateURL.replace(/https:\/\/s3.amazonaws.com/, config.s3.endpoint);
       }
     }
+    await this.reconfigureAWS();
 
     return this.awsProviderRequest(service, method, params);
   }

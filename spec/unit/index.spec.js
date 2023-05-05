@@ -171,7 +171,7 @@ describe("LocalstackPlugin", () => {
       instance = new LocalstackPlugin(serverless, defaultPluginState);
       await simulateBeforeDeployHooks(instance);
 
-      awsProvider.request('s3', 'foo', {
+      await awsProvider.request('s3', 'foo', {
         TemplateURL: pathToTemplate
       });
       expect(request.called).to.be.true;
@@ -184,7 +184,7 @@ describe("LocalstackPlugin", () => {
       instance = new LocalstackPlugin(serverless, defaultPluginState)
       await simulateBeforeDeployHooks(instance);
 
-      awsProvider.request('S3', 'validateTemplate', {});
+      await awsProvider.request('S3', 'validateTemplate', {});
 
       expect(request.called).to.be.false;
     });

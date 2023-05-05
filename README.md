@@ -206,6 +206,7 @@ custom:
 
 ## Change Log
 
+* v1.1.0: Fix SSM environment variables resolving issues with serverless v3, change default for `BUCKET_MARKER_LOCAL` to `hot-reload`
 * v1.0.6: Add `BUCKET_MARKER_LOCAL` configuration for customizing S3 bucket for lambda mount and [Hot Reloading](https://docs.localstack.cloud/user-guide/tools/lambda-tools/hot-reloading/).
 * v1.0.5: Fix S3 Bucket LocationConstraint issue when the provider region is `us-east-1`
 * v1.0.4: Fix IPv4 fallback check to prevent IPv6 connection issue with `localhost` on macOS
