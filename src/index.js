@@ -566,7 +566,7 @@ class LocalstackPlugin {
    */
   async reconfigureAWS() {
     if(this.isActive()) {
-      if(this.reconfigured_endpoints){
+      if(this.reconfiguredEndpoints){
         this.debug("Skipping reconfiguring of endpoints (already reconfigured)")
         return;
       }
@@ -624,7 +624,7 @@ class LocalstackPlugin {
         awsProvider.cachedCredentials.endpoint = localEndpoint;
       }
       this.log("serverless-localstack: Reconfigured endpoints")
-      this.reconfigured_endpoints = true;
+      this.reconfiguredEndpoints = true;
     }
     else {
       this.endpoints = {}

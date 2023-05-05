@@ -26,22 +26,10 @@ const params = {
 
 describe('LocalstackPlugin', () => {
 
-  beforeEach( () => {
-    
-    const self = this;
-    // return promise here because ssm.putParameter is async
-    return new Promise((resolve, reject) => {
-      // create SSM parameter that will be used for the setup
-      ssm.putParameter(params, function(err, data) { // eslint-disable-line
-        if (err) {
-          reject(err);
-        } else {
-          // if successful: create the actual service
-          self.service = services.createService({});
-          resolve(self.service);
-        }
-      });
-    });
+  beforeEach( 
+    async () => {
+      await ssm.putParameter(params).promise();
+      this.service = services.createService({});
   });
 
   afterEach( () => {
