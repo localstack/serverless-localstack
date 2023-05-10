@@ -46,7 +46,7 @@ jobs:
           npm ci
 
       - name: Update SLS versions
-        if: ${{ matrix.sls-major-version }} == '3'
+        if: ${{ matrix.sls-major-version == '3' }}
         run: |
           npm install serverless@3
       
