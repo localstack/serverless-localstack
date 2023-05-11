@@ -25,14 +25,12 @@ jobs:
       - name: Cache node modules
         uses: actions/cache@v2
         env:
-          cache-name: cache-node-modules
+          cache-name: cache-node-modules-v$${{ matrix.sls-major-version }}
         with:
           path: ~/.npm
           key: ${{ runner.os }}-build-${{ env.cache-name }}-$${{ matrix.sls-major-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Start LocalStack
         run: |
@@ -45,7 +43,7 @@ jobs:
         run: |
           npm ci
 
-      - name: Update SLS versions
+      - name: Update SLS version to v3
         if: ${{ matrix.sls-major-version == '3' }}
         run: |
           npm install serverless@3
