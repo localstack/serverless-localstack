@@ -25,10 +25,10 @@ jobs:
       - name: Cache node modules
         uses: actions/cache@v2
         env:
-          cache-name: cache-node-modules-v$${{ matrix.sls-major-version }}
+          cache-name: cache-node-modules-v${{ matrix.sls-major-version }}
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-$${{ matrix.sls-major-version }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-
 
