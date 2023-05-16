@@ -32,16 +32,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-
 
-      - name: Start LocalStack
-        run: |
-          pip install localstack awscli-local[ver1]
-          docker pull localstack/localstack
-          localstack start -d
-          localstack wait -t 30
-
       - name: Install deps
         run: |
-          npm ci
+          # uninstall any existing global serverless installations, if exists
+          npm uninstall -g serverless || true
+          npm uninstall serverless || true
+          npm info serverless version
+          # install dependencies
+          npm install
 
       - name: Update SLS version to v3
         if: ${{ matrix.sls-major-version == '3' }}
@@ -58,6 +56,13 @@ jobs:
             echo "expected version ${EXPECTED_SLS_MAJOR_VERSION}, but installed ${installed_sls_version}"
             exit 1
           fi
+
+      - name: Start LocalStack
+        run: |
+          pip install localstack awscli-local[ver1]
+          docker pull localstack/localstack
+          localstack start -d
+          localstack wait -t 30
 
       - name: Run Lint and Test
         run: |
