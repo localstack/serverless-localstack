@@ -45,7 +45,7 @@ jobs:
         env:
           EXPECTED_SLS_MAJOR_VERSION: ${{ matrix.sls-major-version }}
         run : |
-          installed_sls_version=$(npm list | grep serverless | grep '@2\.')
+          installed_sls_version=$(npm list | grep serverless@ | sed -E 's/.*serverless@(.*)/\1/')
           echo "installed serverless version: ${installed_sls_version}"
           if [ "${installed_sls_version:0:1}" !=  ${EXPECTED_SLS_MAJOR_VERSION} ]; then
             echo "expected version ${EXPECTED_SLS_MAJOR_VERSION}, but installed ${installed_sls_version}"
