@@ -34,11 +34,6 @@ jobs:
 
       - name: Install deps
         run: |
-          # uninstall any existing global serverless installations, if exists
-          npm uninstall -g serverless || true
-          npm uninstall serverless || true
-          npm info serverless version
-          # install dependencies
           npm install
 
       - name: Update SLS version to v3
@@ -50,7 +45,7 @@ jobs:
         env:
           EXPECTED_SLS_MAJOR_VERSION: ${{ matrix.sls-major-version }}
         run : |
-          installed_sls_version=$(npm info serverless version)
+          installed_sls_version=$(npm list | grep serverless | grep '@2\.')
           echo "installed serverless version: ${installed_sls_version}"
           if [ "${installed_sls_version:0:1}" !=  ${EXPECTED_SLS_MAJOR_VERSION} ]; then
             echo "expected version ${EXPECTED_SLS_MAJOR_VERSION}, but installed ${installed_sls_version}"
