@@ -10,26 +10,47 @@ jobs:
   serverless-localstack-test:
     name: Serverless LocalStack CI
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sls-major-version: ["2", "3"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Setup NodeJS
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '12'
+          node-version: '18'
 
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
-          cache-name: cache-node-modules
+          cache-name: cache-node-modules-v${{ matrix.sls-major-version }}
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.sls-major-version }}-
+
+      - name: Install deps
+        run: |
+          npm install
+
+      - name: Update SLS version to v3
+        if: ${{ matrix.sls-major-version == '3' }}
+        run: |
+          npm install serverless@3
+      
+      - name: Check installed version
+        env:
+          EXPECTED_SLS_MAJOR_VERSION: ${{ matrix.sls-major-version }}
+        run : |
+          installed_sls_version=$(npm list | grep serverless@ | sed -E 's/.*serverless@(.*)/\1/')
+          echo "installed serverless version: ${installed_sls_version}"
+          if [ "${installed_sls_version:0:1}" !=  ${EXPECTED_SLS_MAJOR_VERSION} ]; then
+            echo "expected version ${EXPECTED_SLS_MAJOR_VERSION}, but installed ${installed_sls_version}"
+            exit 1
+          fi
 
       - name: Start LocalStack
         run: |
@@ -37,10 +58,6 @@ jobs:
           docker pull localstack/localstack
           localstack start -d
           localstack wait -t 30
-
-      - name: Install deps
-        run: |
-          npm ci
 
       - name: Run Lint and Test
         run: |

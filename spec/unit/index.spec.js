@@ -32,7 +32,7 @@ describe("LocalstackPlugin", () => {
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    serverless = new Serverless();
+    serverless = new Serverless({commands: ['deploy'], options: {}});
     awsProvider = new AwsProvider(serverless, {});
     awsConfig = new AWS.Config();
     AWS.config = awsConfig;
@@ -176,7 +176,8 @@ describe("LocalstackPlugin", () => {
       });
       expect(request.called).to.be.true;
       let templateUrl = request.firstCall.args[2].TemplateURL;
-      expect(templateUrl).to.startsWith(`${config.host}`);
+      // url should either start with 'http://localhost' or 'http://127.0.0.1
+      expect(templateUrl).to.satisfy((url) => url.startsWith(`${config.host}`) || url.startsWith('http://127.0.0.1'));
     });
 
     it('should not send validateTemplate calls to localstack', async () => {

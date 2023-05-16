@@ -8,7 +8,7 @@ const AWS = require('aws-sdk');
 // Set the region and endpoint in the config for LocalStack
 AWS.config.update({
   region: 'us-east-1',
-  endpoint: 'http://localhost:4566'
+  endpoint: 'http://127.0.0.1:4566'
 });
 AWS.config.credentials = new AWS.Credentials({
   accessKeyId: 'test',
