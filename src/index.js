@@ -176,7 +176,6 @@ class LocalstackPlugin {
     }
 
     // Patch plugin methods
-    this.skipIfMountLambda('Package', 'packageService');
     function compileFunction(functionName) {
       if (!this.shouldMountCode()) {
         return compileFunction._functionOriginal.apply(null, arguments);
@@ -210,7 +209,6 @@ class LocalstackPlugin {
     this.skipIfMountLambda('AwsCompileFunctions', 'compileFunction', compileFunction);
     this.skipIfMountLambda('AwsCompileFunctions', 'downloadPackageArtifacts');
     this.skipIfMountLambda('AwsDeploy', 'extendedValidate');
-    this.skipIfMountLambda('AwsDeploy', 'uploadFunctionsAndLayers');
     if (this.detectTypescriptPluginType()) {
       this.skipIfMountLambda(this.detectTypescriptPluginType(), 'cleanup', null, [
         'after:package:createDeploymentArtifacts', 'after:deploy:function:packageFunction']);

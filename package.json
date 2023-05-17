@@ -1,6 +1,6 @@
 {
   "name": "serverless-localstack",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Connect Serverless to LocalStack!",
   "main": "src/index.js",
   "scripts": {
@@ -24,7 +24,8 @@
     "Justin McCormick <me@justinmccormick.com>",
     "djKooks",
     "yohei1126",
-    "bentsku"
+    "bentsku",
+    "Joel Scheuner (joe4dev)"
   ],
   "license": "MIT",
   "bugs": {
