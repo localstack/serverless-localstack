@@ -385,6 +385,9 @@ class LocalstackPlugin {
     const endpoints = plugin.gatheredData.info.endpoints || [];
     const edgePort = this.getEdgePort();
     endpoints.forEach((entry, idx) => {
+      // Strip trailing slash
+      entry = entry.endsWith("/") ? entry.slice(0, -1) : entry;
+
       // endpoint format for old Serverless versions
       const regex = /[^\s:]*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
       const replace = `http://localhost:${edgePort}/restapis/$1/$2/_user_request_$3`;
