@@ -385,9 +385,6 @@ class LocalstackPlugin {
     const endpoints = plugin.gatheredData.info.endpoints || [];
     const edgePort = this.getEdgePort();
     endpoints.forEach((entry, idx) => {
-      // Strip trailing slash
-      entry = entry.endsWith("/") ? entry.slice(0, -1) : entry;
-
       // endpoint format for old Serverless versions
       const regex = /[^\s:]*:\/\/([^.]+)\.execute-api[^/]+\/([^/]+)(\/.*)?/g;
       const replace = `http://localhost:${edgePort}/restapis/$1/$2/_user_request_$3`;
@@ -396,7 +393,7 @@ class LocalstackPlugin {
       //   - https://2e22431f.execute-api.us-east-1.localhost
       //   - https://2e22431f.execute-api.us-east-1.localhost.localstack.cloud
       //   - https://2e22431f.execute-api.us-east-1.amazonaws.com
-      const regex2 = /[^\s:]*:\/\/([^.]+)\.execute-api\.[^/]+(\/([^/]+)(\/.*)?)?/g;
+      const regex2 = /[^\s:]*:\/\/([^.]+)\.execute-api\.[^/]+(([^/]+)(\/.*)?)?\/*$/g;
       const replace2 = `https://$1.execute-api.localhost.localstack.cloud:${edgePort}$2`;
       endpoints[idx] = entry.replace(regex2, replace2);
     });
