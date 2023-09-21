@@ -553,7 +553,7 @@ class LocalstackPlugin {
     const slsSecretsAWS = this.findPlugin('ServerlessSecrets');
     if (slsSecretsAWS) {
       slsSecretsAWS.config.options.providerOptions = slsSecretsAWS.config.options.providerOptions || {};
-      slsSecretsAWS.config.options.providerOptions.endpoint = this.getServiceURL('ssm');
+      slsSecretsAWS.config.options.providerOptions.endpoint = this.getServiceURL();
       slsSecretsAWS.config.options.providerOptions.accessKeyId = 'test';
       slsSecretsAWS.config.options.providerOptions.secretAccessKey = 'test';
     }
@@ -570,8 +570,7 @@ class LocalstackPlugin {
       }
       this.log('Using serverless-localstack');
       const hostname = await this.getConnectHostname();
-      const host = `http://${hostname}`;
-      const edgePort = this.getEdgePort();
+
       const configChanges = {};
 
       // Configure dummy AWS credentials in the environment, to ensure the AWS client libs don't bail.
@@ -591,7 +590,7 @@ class LocalstackPlugin {
       }
 
       // If a host has been configured, override each service
-      const localEndpoint = `${host}:${edgePort}`;
+      const localEndpoint = this.getServiceURL(hostname);
       for (const service of this.awsServices) {
         const serviceLower = service.toLowerCase();
 
@@ -758,9 +757,34 @@ class LocalstackPlugin {
     return this.awsProvider;
   }
 
-  getServiceURL() {
+  getServiceURL(hostname) {
+    if (process.env.AWS_ENDPOINT_URL) {
+      return this.injectHostnameIntoLocalhostURL(process.env.AWS_ENDPOINT_URL, hostname);
+    }
+    hostname = hostname || 'localhost';
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
-    return `${proto}://localhost:${this.getEdgePort()}`;
+    const port = this.getEdgePort();
+    // little hack here - required to remove the default HTTPS port 443, as otherwise
+    // routing for some platforms and ephemeral instances (e.g., on namespace.so) fails
+    const isDefaultPort =
+      (proto === 'http' && `${port}` === '80') ||
+      (proto === 'https' && `${port}` === '443');
+    if (isDefaultPort) {
+      return `${proto}://${hostname}`;
+    }
+    return `${proto}://${hostname}:${port}`;
+  }
+
+  /**
+   * If the given `endpointURL` points to `localhost`, then inject the given `hostname` into the URL
+   * and return it. This helps fix IPv6 issues with node v18+ (see also getConnectHostname() above)
+   */
+  injectHostnameIntoLocalhostURL(endpointURL, hostname) {
+    const url = new URL(endpointURL);
+    if (hostname && url.hostname === 'localhost') {
+      url.hostname = hostname;
+    }
+    return url.href;
   }
 
   log(msg) {
@@ -786,7 +810,7 @@ class LocalstackPlugin {
   stepFunctionsReplaceDisplay() {
     const plugin = this.findPlugin('ServerlessStepFunctions');
     if (plugin) {
-      const endpoint = this.getServiceURL()
+      const endpoint = this.getServiceURL();
       plugin.originalDisplay = plugin.display;
       plugin.localstackEndpoint = endpoint;
 
