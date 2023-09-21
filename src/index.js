@@ -759,17 +759,32 @@ class LocalstackPlugin {
 
   getServiceURL(hostname) {
     if (process.env.AWS_ENDPOINT_URL) {
-      return process.env.AWS_ENDPOINT_URL;
+      return this.injectHostnameIntoLocalhostURL(process.env.AWS_ENDPOINT_URL, hostname);
     }
     hostname = hostname || 'localhost';
     const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
     const port = this.getEdgePort();
-    if (proto === 'https' && `${port}` === '443') {
-      // little hack here - required to remove the default HTTPS port 443, as otherwise
-      // routing for some platforms and ephemeral instances (e.g., on namespace.so) fails
+    // little hack here - required to remove the default HTTPS port 443, as otherwise
+    // routing for some platforms and ephemeral instances (e.g., on namespace.so) fails
+    const isDefaultPort =
+      (proto === 'http' && `${port}` === '80') ||
+      (proto === 'https' && `${port}` === '443');
+    if (isDefaultPort) {
       return `${proto}://${hostname}`;
     }
     return `${proto}://${hostname}:${port}`;
+  }
+
+  /**
+   * If the given `endpointURL` points to `localhost`, then inject the given `hostname` into the URL
+   * and return it. This helps fix IPv6 issues with node v18+ (see also getConnectHostname() above)
+   */
+  injectHostnameIntoLocalhostURL(endpointURL, hostname) {
+    const url = new URL(endpointURL);
+    if (hostname && url.hostname === 'localhost') {
+      url.hostname = hostname;
+    }
+    return url.href;
   }
 
   log(msg) {
