@@ -177,7 +177,28 @@ describe("LocalstackPlugin", () => {
       expect(request.called).to.be.true;
       let templateUrl = request.firstCall.args[2].TemplateURL;
       // url should either start with 'http://localhost' or 'http://127.0.0.1
-      expect(templateUrl).to.satisfy((url) => url.startsWith(`${config.host}`) || url.startsWith('http://127.0.0.1'));
+      expect(templateUrl).to.satisfy((url) => url === `${config.host}:4566/path/to/template` || url === 'http://127.0.0.1:4566/path/to/template');
+    });
+
+    it('should overwrite the S3 hostname with the value from environment variable', async () => {
+      // Set environment variable to overwrite the default host
+      process.env.AWS_ENDPOINT_URL = 'http://localstack:4566';
+
+      const pathToTemplate = 'https://s3.amazonaws.com/path/to/template';
+      const request = sinon.stub(awsProvider, 'request');
+      instance = new LocalstackPlugin(serverless, defaultPluginState);
+      await simulateBeforeDeployHooks(instance);
+
+      await awsProvider.request('s3', 'foo', {
+        TemplateURL: pathToTemplate
+      });
+
+      // Remove the environment variable again to not affect other tests
+      delete process.env.AWS_ENDPOINT_URL
+
+      expect(request.called).to.be.true;
+      let templateUrl = request.firstCall.args[2].TemplateURL;
+      expect(templateUrl).to.equal('http://localstack:4566/path/to/template');
     });
 
     it('should not send validateTemplate calls to localstack', async () => {
