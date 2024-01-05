@@ -784,7 +784,7 @@ class LocalstackPlugin {
     if (hostname && url.hostname === 'localhost') {
       url.hostname = hostname;
     }
-    return url.href;
+    return url.origin;
   }
 
   log(msg) {
