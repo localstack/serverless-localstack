@@ -208,6 +208,7 @@ custom:
 
 ## Change Log
 
+* v1.1.3: Fix replacing host from environment variable `AWS_ENDPOINT_URL`
 * v1.1.2: Unify construction of target endpoint URL, add support for configuring `AWS_ENDPOINT_URL`
 * v1.1.1: Fix layer deployment if `mountCode` is enabled by always packaging and deploying
 * v1.1.0: Fix SSM environment variables resolving issues with serverless v3, change default for `BUCKET_MARKER_LOCAL` to `hot-reload`
