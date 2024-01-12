@@ -406,7 +406,7 @@ class LocalstackPlugin {
    * Start the LocalStack container in Docker, if it is not running yet.
    */
   startLocalStack() {
-    if (!this.config.autostart) {
+    if (!this.config.autostart || !this.isActive()) {
       return Promise.resolve();
     }
 
@@ -452,27 +452,42 @@ class LocalstackPlugin {
       return containerID;
     }
 
+    const startContainer = () => {
+      this.log('Starting LocalStack in Docker. This can take a while.');
+      const cwd = process.cwd();
+      const env = this.clone(process.env);
+      env.DEBUG = '1';
+      env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
+      env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
+      env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
+      env.START_WEB = env.START_WEB || '0';
+      const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
+      if (this.shouldRunDockerSudo()) {
+        env.DOCKER_CMD = 'sudo docker';
+      }
+      const options = {env: env, maxBuffer};
+      return exec('localstack start', options).then(getContainer)
+          .then((containerID) => addNetworks(containerID))
+          .then((containerID) => checkStatus(containerID));
+    }
+
+    const startCompose = () => {
+      return exec(`docker-compose -f ${this.config.compose_file} `).then(getContainer)
+    }
+
     return getContainer().then(
       (containerID) => {
         if(containerID) {
           return;
         }
-        this.log('Starting LocalStack in Docker. This can take a while.');
-        const cwd = process.cwd();
-        const env = this.clone(process.env);
-        env.DEBUG = '1';
-        env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
-        env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
-        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
-        env.START_WEB = env.START_WEB || '0';
-        const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
-        if (this.shouldRunDockerSudo()) {
-          env.DOCKER_CMD = 'sudo docker';
+
+        if(this.config.compose_file){
+            console.log("Using docker-compose file: " + this.config.compose_file)
+            return startCompose();
         }
-        const options = {env: env, maxBuffer};
-        return exec('localstack start', options).then(getContainer)
-          .then((containerID) => addNetworks(containerID))
-          .then((containerID) => checkStatus(containerID));
+        console.log("No docker-compose file: ")
+
+        return startContainer();
       }
     );
   }
