@@ -482,10 +482,8 @@ class LocalstackPlugin {
         }
 
         if(this.config.compose_file){
-            console.log("Using docker-compose file: " + this.config.compose_file)
             return startCompose();
         }
-        console.log("No docker-compose file: ")
 
         return startContainer();
       }
