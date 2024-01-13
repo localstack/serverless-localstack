@@ -4,11 +4,8 @@ provider:
   name: aws
   profile: ${opt:profile, self:custom.profile}
   stage: ${opt:stage, self:custom.defaultStage}
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   lambdaHashingVersion: '20201221'
-
-plugins:
-  - serverless-localstack
 
 custom:
   defaultStage: local
@@ -16,6 +13,8 @@ custom:
   localstack:
     debug: true
     stages: [local]
+    autostart: true
+    compose_file: /home/cristopher/Projects/serverless-localstack/docker-compose.yml
 
 functions:
   hello:
@@ -23,5 +22,6 @@ functions:
     environment:
       SSM_VAR: ${ssm:abc}
       # CF_VAR: ${cf:def}
-    events:
-      - sns: ${env:EXISTING_TOPIC_ARN}
+
+plugins:
+  - serverless-localstack
