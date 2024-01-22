@@ -472,7 +472,7 @@ class LocalstackPlugin {
     }
 
     const startCompose = () => {
-      return exec(`docker-compose -f ${this.config.compose_file} `).then(getContainer)
+      return exec(`docker-compose -f ${this.config.docker.compose_file} `).then(getContainer)
     }
 
     return getContainer().then(
@@ -481,7 +481,7 @@ class LocalstackPlugin {
           return;
         }
 
-        if(this.config.compose_file){
+        if(this.config.docker && this.config.docker.compose_file){
             return startCompose();
         }
 
