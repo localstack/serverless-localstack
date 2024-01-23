@@ -393,7 +393,7 @@ class LocalstackPlugin {
       //   - https://2e22431f.execute-api.us-east-1.localhost
       //   - https://2e22431f.execute-api.us-east-1.localhost.localstack.cloud
       //   - https://2e22431f.execute-api.us-east-1.amazonaws.com
-      const regex2 = /[^\s:]*:\/\/([^.]+)\.execute-api\.[^/]+(\/([^/]+)(\/.*)?)?/g;
+      const regex2 = /[^\s:]*:\/\/([^.]+)\.execute-api\.[^/]+(([^/]+)(\/.*)?)?\/*$/g;
       const replace2 = `https://$1.execute-api.localhost.localstack.cloud:${edgePort}$2`;
       endpoints[idx] = entry.replace(regex2, replace2);
     });
