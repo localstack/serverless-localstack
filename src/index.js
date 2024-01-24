@@ -465,7 +465,7 @@ class LocalstackPlugin {
       env.DEBUG = '1';
       env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
       env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
-      env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
+      env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -v ${cwd}:${cwd}`;
       env.START_WEB = env.START_WEB || '0';
       const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
       if (this.shouldRunDockerSudo()) {
