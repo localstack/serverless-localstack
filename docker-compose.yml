@@ -1,23 +1,5 @@
 version: '2'
 services:
-  dev-env:
-    build:
-      context: .
-    working_dir: /app
-    volumes:
-      - .:/app
-      - ~/.aws/:/root/.aws
-      - ~/.gitconfig:/root/.gitconfig
-      - ~/.gitconfig.local:/root/.gitconfig.local
-    environment:
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
-      - AWS_PROFILE
-      - AWS_SESSION_TOKEN
-      - AWS_SECURITY_TOKEN
-      - SNYK_TOKEN
-    entrypoint:
-      - /bin/bash
   localstack:
     image: localstack/localstack
     ports:
