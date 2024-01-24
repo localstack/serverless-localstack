@@ -406,7 +406,7 @@ class LocalstackPlugin {
    * Start the LocalStack container in Docker, if it is not running yet.
    */
   startLocalStack() {
-    if (!this.config.autostart || !this.isActive()) {
+    if (!(this.config.autostart && this.isActive())) {
       return Promise.resolve();
     }
 

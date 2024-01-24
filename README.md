@@ -208,7 +208,7 @@ custom:
 ```
 
 ## Change Log
-* v1.2.1: Add docker_compose config and fix autostart when plugin is not active 
+* v1.2.0: Add docker-compose config and fix autostart when plugin is not active 
 * v1.1.3: Fix replacing host from environment variable `AWS_ENDPOINT_URL`
 * v1.1.2: Unify construction of target endpoint URL, add support for configuring `AWS_ENDPOINT_URL`
 * v1.1.1: Fix layer deployment if `mountCode` is enabled by always packaging and deploying
