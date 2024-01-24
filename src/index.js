@@ -413,7 +413,13 @@ class LocalstackPlugin {
     const getContainer = () => {
       return exec('docker ps').then(
         (stdout) => {
-          const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0 || line.indexOf('localstack_localstack') >= 0);
+          const exists = stdout.split('\n').filter(
+              (line) => (
+                  line.indexOf('localstack/localstack') >= 0 ||
+                  line.indexOf('localstack/localstack-pro') >= 0 ||
+                  line.indexOf('localstack_localstack') >= 0
+              )
+          );
           if (exists.length) {
             return exists[0].replace('\t', ' ').split(' ')[0];
           }
