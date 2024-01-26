@@ -472,12 +472,13 @@ class LocalstackPlugin {
         env.DOCKER_CMD = 'sudo docker';
       }
       const options = {env: env, maxBuffer};
-      return exec('localstack start', options).then(getContainer)
+      return exec('localstack start -d', options).then(getContainer)
           .then((containerID) => addNetworks(containerID))
           .then((containerID) => checkStatus(containerID));
     }
 
     const startCompose = () => {
+      this.log('Starting LocalStack using the provided docker-compose file. This can take a while.');
       return exec(`docker-compose -f ${this.config.docker.compose_file} up -d`).then(getContainer)
     }
 
