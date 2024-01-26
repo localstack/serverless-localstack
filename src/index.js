@@ -406,14 +406,20 @@ class LocalstackPlugin {
    * Start the LocalStack container in Docker, if it is not running yet.
    */
   startLocalStack() {
-    if (!this.config.autostart) {
+    if (!(this.config.autostart && this.isActive())) {
       return Promise.resolve();
     }
 
     const getContainer = () => {
       return exec('docker ps').then(
         (stdout) => {
-          const exists = stdout.split('\n').filter((line) => line.indexOf('localstack/localstack') >= 0 || line.indexOf('localstack_localstack') >= 0);
+          const exists = stdout.split('\n').filter(
+              (line) => (
+                  line.indexOf('localstack/localstack') >= 0 ||
+                  line.indexOf('localstack/localstack-pro') >= 0 ||
+                  line.indexOf('localstack_localstack') >= 0
+              )
+          );
           if (exists.length) {
             return exists[0].replace('\t', ' ').split(' ')[0];
           }
@@ -452,27 +458,41 @@ class LocalstackPlugin {
       return containerID;
     }
 
+    const startContainer = () => {
+      this.log('Starting LocalStack in Docker. This can take a while.');
+      const cwd = process.cwd();
+      const env = this.clone(process.env);
+      env.DEBUG = '1';
+      env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
+      env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
+      env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -v ${cwd}:${cwd}`;
+      env.START_WEB = env.START_WEB || '0';
+      const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
+      if (this.shouldRunDockerSudo()) {
+        env.DOCKER_CMD = 'sudo docker';
+      }
+      const options = {env: env, maxBuffer};
+      return exec('localstack start -d', options).then(getContainer)
+          .then((containerID) => addNetworks(containerID))
+          .then((containerID) => checkStatus(containerID));
+    }
+
+    const startCompose = () => {
+      this.log('Starting LocalStack using the provided docker-compose file. This can take a while.');
+      return exec(`docker-compose -f ${this.config.docker.compose_file} up -d`).then(getContainer)
+    }
+
     return getContainer().then(
       (containerID) => {
         if(containerID) {
           return;
         }
-        this.log('Starting LocalStack in Docker. This can take a while.');
-        const cwd = process.cwd();
-        const env = this.clone(process.env);
-        env.DEBUG = '1';
-        env.LAMBDA_EXECUTOR = env.LAMBDA_EXECUTOR || 'docker';
-        env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
-        env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -d -v ${cwd}:${cwd}`;
-        env.START_WEB = env.START_WEB || '0';
-        const maxBuffer = (+env.EXEC_MAXBUFFER)||50*1000*1000; // 50mb buffer to handle output
-        if (this.shouldRunDockerSudo()) {
-          env.DOCKER_CMD = 'sudo docker';
+
+        if(this.config.docker && this.config.docker.compose_file){
+            return startCompose();
         }
-        const options = {env: env, maxBuffer};
-        return exec('localstack start', options).then(getContainer)
-          .then((containerID) => addNetworks(containerID))
-          .then((containerID) => checkStatus(containerID));
+
+        return startContainer();
       }
     );
   }
