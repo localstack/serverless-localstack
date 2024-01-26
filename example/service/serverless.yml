@@ -14,7 +14,7 @@ custom:
     debug: true
     stages: [local]
     autostart: true
-    compose_file: /home/cristopher/Projects/serverless-localstack/docker-compose.yml
+    compose_file: /home/localstack/Projects/serverless-localstack/docker-compose.yml
 
 functions:
   hello:
