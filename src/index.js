@@ -21,9 +21,6 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect fr
 const TS_PLUGIN_ESBUILD = 'EsbuildServerlessPlugin'
 const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect from esbuild.config.js
 
-// Default edge port to use with host
-const DEFAULT_EDGE_PORT = '4566';
-
 // Default AWS endpoint URL
 const DEFAULT_AWS_ENDPOINT_URL = "https://localhost.localstack.cloud:4566";
 
