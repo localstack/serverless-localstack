@@ -24,8 +24,13 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect fro
 // Default edge port to use with host
 const DEFAULT_EDGE_PORT = '4566';
 
+// Default AWS endpoint URL
+const DEFAULT_AWS_ENDPOINT_URL = "https://localhost.localstack.cloud:4566";
+
 // Cache hostname to avoid unnecessary connection checks
 var resolvedHostname = undefined;
+
+const awsEndpointUrl = process.env.AWS_ENDPOINT_URL || DEFAULT_AWS_ENDPOINT_URL;
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -700,8 +705,23 @@ class LocalstackPlugin {
 
   /* Utility functions below */
 
+  getEndpointPort(){
+    const url = new URL(awsEndpointUrl);
+    return url.port;
+  }
+
+  getEndpointHostname(){
+    const url = new URL(awsEndpointUrl);
+    return url.hostname;
+  }
+
+  getEndpointProtocol(){
+    const url = new URL(awsEndpointUrl);
+    return url.protocol;
+  }
+
   getEdgePort() {
-    return process.env.EDGE_PORT || this.config.edgePort || DEFAULT_EDGE_PORT;
+    return process.env.EDGE_PORT || this.config.edgePort || this.getEndpointPort();
   }
 
   /**
@@ -713,7 +733,7 @@ class LocalstackPlugin {
       return resolvedHostname;
     }
 
-    var hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
+    var hostname = process.env.LOCALSTACK_HOSTNAME || this.getEndpointHostname();
     if (this.config.host) {
       hostname = this.config.host;
       if (hostname.indexOf("://") !== -1) {
@@ -782,7 +802,11 @@ class LocalstackPlugin {
       return this.injectHostnameIntoLocalhostURL(process.env.AWS_ENDPOINT_URL, hostname);
     }
     hostname = hostname || 'localhost';
-    const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
+
+    let proto = this.getEndpointProtocol();
+    if (process.env.USE_SSL) {
+      proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
+    }
     const port = this.getEdgePort();
     // little hack here - required to remove the default HTTPS port 443, as otherwise
     // routing for some platforms and ephemeral instances (e.g., on namespace.so) fails
