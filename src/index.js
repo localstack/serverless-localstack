@@ -714,7 +714,7 @@ class LocalstackPlugin {
 
   getEndpointProtocol(){
     const url = new URL(awsEndpointUrl);
-    return url.protocol;
+    return url.protocol.replace(":","");
   }
 
   getEdgePort() {
