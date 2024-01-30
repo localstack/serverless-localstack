@@ -24,7 +24,6 @@ const defaultConfig = {
   ],
   custom: {
     localstack: {
-      host: 'http://localhost',
       debug: debug,
     }
   },
