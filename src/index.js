@@ -22,7 +22,7 @@ const TS_PLUGIN_ESBUILD = 'EsbuildServerlessPlugin'
 const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect from esbuild.config.js
 
 // Default AWS endpoint URL
-const DEFAULT_AWS_ENDPOINT_URL = "https://localhost.localstack.cloud:4566";
+const DEFAULT_AWS_ENDPOINT_URL = "http://localhost:4566";
 
 // Cache hostname to avoid unnecessary connection checks
 var resolvedHostname = undefined;
