@@ -177,7 +177,7 @@ describe("LocalstackPlugin", () => {
       expect(request.called).to.be.true;
       let templateUrl = request.firstCall.args[2].TemplateURL;
       // url should either start with 'http://localhost' or 'http://127.0.0.1
-      expect(templateUrl).to.satisfy((url) => url === `${config.host}:4566/path/to/template` || url === 'http://localhost:4566/path/to/template');
+      expect(templateUrl).to.satisfy((url) => url === `${config.host}:4566/path/to/template` || url === 'http://127.0.0.1:4566/path/to/template');
     });
 
     it('should overwrite the S3 hostname with the value from environment variable', async () => {
