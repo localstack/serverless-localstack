@@ -21,11 +21,13 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect fr
 const TS_PLUGIN_ESBUILD = 'EsbuildServerlessPlugin'
 const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect from esbuild.config.js
 
-// Default edge port to use with host
-const DEFAULT_EDGE_PORT = '4566';
+// Default AWS endpoint URL
+const DEFAULT_AWS_ENDPOINT_URL = "http://localhost:4566";
 
 // Cache hostname to avoid unnecessary connection checks
 var resolvedHostname = undefined;
+
+const awsEndpointUrl = process.env.AWS_ENDPOINT_URL || DEFAULT_AWS_ENDPOINT_URL;
 
 class LocalstackPlugin {
   constructor(serverless, options) {
@@ -136,17 +138,17 @@ class LocalstackPlugin {
     if (this.detectTypescriptPluginType() === TS_PLUGIN_WEBPACK) {
       const p = this.serverless.pluginManager.plugins.find((x) => x.constructor.name === TS_PLUGIN_WEBPACK);
       if (
-        this.shouldMountCode() && (
-          !p ||
-          !p.serverless ||
-          !p.serverless.configurationInput ||
-          !p.serverless.configurationInput.custom ||
-          !p.serverless.configurationInput.custom.webpack ||
-          !p.serverless.configurationInput.custom.webpack.keepOutputDirectory
-        )
+          this.shouldMountCode() && (
+              !p ||
+              !p.serverless ||
+              !p.serverless.configurationInput ||
+              !p.serverless.configurationInput.custom ||
+              !p.serverless.configurationInput.custom.webpack ||
+              !p.serverless.configurationInput.custom.webpack.keepOutputDirectory
+          )
       ) {
         throw new Error('When mounting Lambda code, you must retain webpack output directory. '
-          + 'Set custom.webpack.keepOutputDirectory to true.');
+            + 'Set custom.webpack.keepOutputDirectory to true.');
       }
     }
   }
@@ -158,7 +160,7 @@ class LocalstackPlugin {
   addHookInFirstPosition(eventName, hookFunction) {
     this.serverless.pluginManager.hooks[eventName] = this.serverless.pluginManager.hooks[eventName] || [];
     this.serverless.pluginManager.hooks[eventName].unshift(
-      { pluginName: 'LocalstackPlugin', hook: hookFunction.bind(this, eventName) });
+        { pluginName: 'LocalstackPlugin', hook: hookFunction.bind(this, eventName) });
   }
 
   activatePlugin(preHooks) {
@@ -241,11 +243,11 @@ class LocalstackPlugin {
     this.getStageVariable();
 
     return this.startLocalStack().then(
-      () => {
+        () => {
           this.patchServerlessSecrets();
           this.patchS3BucketLocationResponse();
           this.patchS3CreateBucketLocationConstraint();
-      }
+        }
     );
   }
 
@@ -298,17 +300,17 @@ class LocalstackPlugin {
 
     // overwrite bound functions for specified hook names
     (hookNames || []).forEach(
-      (hookName) => {
-        plugin.hooks[hookName] = boundOverrideFunction;
-        const slsHooks = this.serverless.pluginManager.hooks[hookName] || [];
-        slsHooks.forEach(
-          (hookItem) => {
-            if (hookItem.pluginName === pluginName) {
-              hookItem.hook = boundOverrideFunction;
-            }
-          }
-        );
-      }
+        (hookName) => {
+          plugin.hooks[hookName] = boundOverrideFunction;
+          const slsHooks = this.serverless.pluginManager.hooks[hookName] || [];
+          slsHooks.forEach(
+              (hookItem) => {
+                if (hookItem.pluginName === pluginName) {
+                  hookItem.hook = boundOverrideFunction;
+                }
+              }
+          );
+        }
     );
   }
 
@@ -412,18 +414,18 @@ class LocalstackPlugin {
 
     const getContainer = () => {
       return exec('docker ps').then(
-        (stdout) => {
-          const exists = stdout.split('\n').filter(
-              (line) => (
-                  line.indexOf('localstack/localstack') >= 0 ||
-                  line.indexOf('localstack/localstack-pro') >= 0 ||
-                  line.indexOf('localstack_localstack') >= 0
-              )
-          );
-          if (exists.length) {
-            return exists[0].replace('\t', ' ').split(' ')[0];
+          (stdout) => {
+            const exists = stdout.split('\n').filter(
+                (line) => (
+                    line.indexOf('localstack/localstack') >= 0 ||
+                    line.indexOf('localstack/localstack-pro') >= 0 ||
+                    line.indexOf('localstack_localstack') >= 0
+                )
+            );
+            if (exists.length) {
+              return exists[0].replace('\t', ' ').split(' ')[0];
+            }
           }
-        }
       )
     };
 
@@ -438,13 +440,13 @@ class LocalstackPlugin {
       return this.sleep(4000).then(() => {
         this.log(`Checking state of LocalStack container ${containerID}`)
         return exec(`docker logs "${containerID}"`).then(
-          (logs) => {
-            const ready = logs.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
-            if (ready.length) {
-              return Promise.resolve();
+            (logs) => {
+              const ready = logs.split('\n').filter((line) => line.indexOf('Ready.') >= 0);
+              if (ready.length) {
+                return Promise.resolve();
+              }
+              return checkStatus(containerID, timeout);
             }
-            return checkStatus(containerID, timeout);
-          }
         );
       });
     }
@@ -483,17 +485,17 @@ class LocalstackPlugin {
     }
 
     return getContainer().then(
-      (containerID) => {
-        if(containerID) {
-          return;
-        }
+        (containerID) => {
+          if(containerID) {
+            return;
+          }
 
-        if(this.config.docker && this.config.docker.compose_file){
+          if(this.config.docker && this.config.docker.compose_file){
             return startCompose();
-        }
+          }
 
-        return startContainer();
-      }
+          return startContainer();
+        }
     );
   }
 
@@ -508,12 +510,12 @@ class LocalstackPlugin {
     const template = this.serverless.service.provider.compiledCloudFormationTemplate || {};
     const resources = template.Resources || {};
     Object.keys(resources).forEach(
-      (resName) => {
-        const resEntry = resources[resName];
-        if (resEntry.Type === 'AWS::Lambda::Function') {
-          resEntry.Properties.Handler = `${this.getTSBuildDir()}/${resEntry.Properties.Handler}`;
+        (resName) => {
+          const resEntry = resources[resName];
+          if (resEntry.Type === 'AWS::Lambda::Function') {
+            resEntry.Properties.Handler = `${this.getTSBuildDir()}/${resEntry.Properties.Handler}`;
+          }
         }
-      }
     );
   }
 
@@ -540,9 +542,9 @@ class LocalstackPlugin {
   }
 
   /**
-  * Patch S3 createBucket invocation to not add a LocationContraint if the region is `us-east-1`
-  * The default SDK check was against endpoint and not the region directly.
-  */
+   * Patch S3 createBucket invocation to not add a LocationContraint if the region is `us-east-1`
+   * The default SDK check was against endpoint and not the region directly.
+   */
   patchS3CreateBucketLocationConstraint () {
     AWS.util.update(AWS.S3.prototype, {
       createBucket: function createBucket (params, callback) {
@@ -646,7 +648,7 @@ class LocalstackPlugin {
     else {
       this.endpoints = {}
       this.log("Skipping serverless-localstack:\ncustom.localstack.stages: " +
-        JSON.stringify(this.config.stages) + "\nstage: " + this.config.stage
+          JSON.stringify(this.config.stages) + "\nstage: " + this.config.stage
       )
     }
   }
@@ -700,8 +702,23 @@ class LocalstackPlugin {
 
   /* Utility functions below */
 
+  getEndpointPort(){
+    const url = new URL(awsEndpointUrl);
+    return url.port;
+  }
+
+  getEndpointHostname(){
+    const url = new URL(awsEndpointUrl);
+    return url.hostname;
+  }
+
+  getEndpointProtocol(){
+    const url = new URL(awsEndpointUrl);
+    return url.protocol.replace(":","");
+  }
+
   getEdgePort() {
-    return process.env.EDGE_PORT || this.config.edgePort || DEFAULT_EDGE_PORT;
+    return process.env.EDGE_PORT || this.config.edgePort || this.getEndpointPort();
   }
 
   /**
@@ -713,7 +730,7 @@ class LocalstackPlugin {
       return resolvedHostname;
     }
 
-    var hostname = process.env.LOCALSTACK_HOSTNAME || 'localhost';
+    var hostname = process.env.LOCALSTACK_HOSTNAME || this.getEndpointHostname();
     if (this.config.host) {
       hostname = this.config.host;
       if (hostname.indexOf("://") !== -1) {
@@ -782,13 +799,19 @@ class LocalstackPlugin {
       return this.injectHostnameIntoLocalhostURL(process.env.AWS_ENDPOINT_URL, hostname);
     }
     hostname = hostname || 'localhost';
-    const proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
+
+    let proto = this.getEndpointProtocol();
+    if (process.env.USE_SSL) {
+      proto = TRUE_VALUES.includes(process.env.USE_SSL) ? 'https' : 'http';
+    }else if (this.config.host){
+      proto = this.config.host.split("://")[0];
+    }
     const port = this.getEdgePort();
     // little hack here - required to remove the default HTTPS port 443, as otherwise
     // routing for some platforms and ephemeral instances (e.g., on namespace.so) fails
     const isDefaultPort =
-      (proto === 'http' && `${port}` === '80') ||
-      (proto === 'https' && `${port}` === '443');
+        (proto === 'http' && `${port}` === '80') ||
+        (proto === 'https' && `${port}` === '443');
     if (isDefaultPort) {
       return `${proto}://${hostname}`;
     }
@@ -850,14 +873,14 @@ class LocalstackPlugin {
   patchCustomResourceLambdaS3ForcePathStyle () {
     const awsProvider = this.awsProvider;
     const patchMarker = path.join(
-      awsProvider.serverless.serviceDir,
-      '.serverless',
-      '.internal-custom-resources-patched'
+        awsProvider.serverless.serviceDir,
+        '.serverless',
+        '.internal-custom-resources-patched'
     );
     const zipFilePath = path.join(
-      awsProvider.serverless.serviceDir,
-      '.serverless',
-      awsProvider.naming.getCustomResourcesArtifactName()
+        awsProvider.serverless.serviceDir,
+        '.serverless',
+        awsProvider.naming.getCustomResourcesArtifactName()
     );
 
     function fileExists (filePath) {
