@@ -4,7 +4,7 @@ const chai = require('chai');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
-const Serverless = require('serverless')
+const Serverless = require('serverless');
 let AwsProvider;
 try {
   AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
@@ -17,22 +17,21 @@ chai.use(require('chai-string'));
 // Enable for more verbose logging
 const debug = false;
 
-describe("LocalstackPlugin", () => {
-
+describe('LocalstackPlugin', () => {
   let serverless;
   let awsProvider;
   let awsConfig;
   let instance;
   let sandbox;
-  let defaultPluginState = {};
-  let config = {
+  const defaultPluginState = {};
+  const config = {
     host: 'http://localhost',
-    debug: debug
+    debug: debug,
   };
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    serverless = new Serverless({commands: ['deploy'], options: {}});
+    serverless = new Serverless({ commands: ['deploy'], options: {} });
     awsProvider = new AwsProvider(serverless, {});
     awsConfig = new AWS.Config();
     AWS.config = awsConfig;
@@ -43,9 +42,9 @@ describe("LocalstackPlugin", () => {
     if (serverless.cli) {
       serverless.cli.log = () => {
         if (debug) {
-          console.log.apply(this, arguments);  // eslint-disable-line no-console
+          console.log.apply(this, arguments); // eslint-disable-line no-console
         }
-      }
+      };
     }
   });
 
@@ -53,7 +52,7 @@ describe("LocalstackPlugin", () => {
     sandbox.restore();
   });
 
-  let simulateBeforeDeployHooks = async function(instance) {
+  const simulateBeforeDeployHooks = async function (instance) {
     instance.readConfig();
     instance.activatePlugin();
     instance.getStageVariable();
@@ -80,75 +79,82 @@ describe("LocalstackPlugin", () => {
     describe('with config file provided', () => {
       beforeEach(async () => {
         serverless.service.custom = {
-          localstack: {}
+          localstack: {},
         };
         instance = new LocalstackPlugin(serverless, defaultPluginState);
         await simulateBeforeDeployHooks(instance);
       });
 
       it('should not set the endpoints if the stages config option does not include the deployment stage', async () => {
-          serverless.service.custom.localstack.stages = ['production'];
+        serverless.service.custom.localstack.stages = ['production'];
 
-          let plugin = new LocalstackPlugin(serverless, defaultPluginState);
-          await simulateBeforeDeployHooks(plugin);
-          expect(plugin.endpoints).to.be.empty;
+        const plugin = new LocalstackPlugin(serverless, defaultPluginState);
+        await simulateBeforeDeployHooks(plugin);
+        expect(plugin.endpoints).to.be.empty;
       });
 
       it('should set the endpoints if the stages config option includes the deployment stage', async () => {
         serverless.service.custom.localstack.stages = ['production', 'staging'];
 
-        let plugin = new LocalstackPlugin(serverless, {'stage':'production'})
+        const plugin = new LocalstackPlugin(serverless, {
+          stage: 'production',
+        });
         await simulateBeforeDeployHooks(plugin);
 
-        expect(plugin.config.stages).to.deep.equal(['production','staging']);
+        expect(plugin.config.stages).to.deep.equal(['production', 'staging']);
         expect(plugin.config.stage).to.equal('production');
       });
 
       it('should fail if the endpoint file does not exist and the stages config option includes the deployment stage', () => {
         serverless.service.custom.localstack = {
           endpointFile: 'missing.json',
-          stages: ['production']
-        }
+          stages: ['production'],
+        };
 
-        let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'production'});
+        const plugin = () => {
+          const pluginInstance = new LocalstackPlugin(serverless, {
+            stage: 'production',
+          });
           pluginInstance.readConfig();
-        }
+        };
 
-        expect(plugin).to.throw('Endpoint file "missing.json" is invalid:')
+        expect(plugin).to.throw('Endpoint file "missing.json" is invalid:');
       });
 
       it('should not fail if the endpoint file does not exist when the stages config option does not include the deployment stage', () => {
         serverless.service.custom.localstack = {
           endpointFile: 'missing.json',
-          stages: ['production']
-        }
+          stages: ['production'],
+        };
 
-        let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, {'stage':'staging'});
+        const plugin = () => {
+          const pluginInstance = new LocalstackPlugin(serverless, {
+            stage: 'staging',
+          });
           pluginInstance.readConfig();
-        }
+        };
 
-        expect(plugin).to.not.throw('Endpoint file "missing.json" is invalid:')
+        expect(plugin).to.not.throw('Endpoint file "missing.json" is invalid:');
       });
 
       it('should fail if the endpoint file is not json', () => {
         serverless.service.custom.localstack = {
-          endpointFile: 'README.md'
-        }
-        let plugin = () => {
-          let pluginInstance = new LocalstackPlugin(serverless, defaultPluginState);
+          endpointFile: 'README.md',
+        };
+        const plugin = () => {
+          const pluginInstance = new LocalstackPlugin(
+            serverless,
+            defaultPluginState,
+          );
           pluginInstance.readConfig();
-        }
-        expect(plugin).to.throw(/Endpoint file "README.md" is invalid:/)
+        };
+        expect(plugin).to.throw(/Endpoint file "README.md" is invalid:/);
       });
-
     });
   });
 
   describe('#request() bound on AWS provider', () => {
-
-    beforeEach(()=> {
+    beforeEach(() => {
       class FakeService {
         foo() {
           return this;
@@ -161,8 +167,8 @@ describe("LocalstackPlugin", () => {
 
       serverless.providers.aws.sdk.S3 = FakeService;
       serverless.service.custom = {
-        localstack: {}
-      }
+        localstack: {},
+      };
     });
 
     it('should overwrite the S3 hostname', async () => {
@@ -172,12 +178,16 @@ describe("LocalstackPlugin", () => {
       await simulateBeforeDeployHooks(instance);
 
       await awsProvider.request('s3', 'foo', {
-        TemplateURL: pathToTemplate
+        TemplateURL: pathToTemplate,
       });
       expect(request.called).to.be.true;
-      let templateUrl = request.firstCall.args[2].TemplateURL;
+      const templateUrl = request.firstCall.args[2].TemplateURL;
       // url should either start with 'http://localhost' or 'http://127.0.0.1
-      expect(templateUrl).to.satisfy((url) => url === `${config.host}:4566/path/to/template` || url === 'http://127.0.0.1:4566/path/to/template');
+      expect(templateUrl).to.satisfy(
+        (url) =>
+          url === `${config.host}:4566/path/to/template` ||
+          url === 'http://127.0.0.1:4566/path/to/template',
+      );
     });
 
     it('should overwrite the S3 hostname with the value from environment variable', async () => {
@@ -190,27 +200,25 @@ describe("LocalstackPlugin", () => {
       await simulateBeforeDeployHooks(instance);
 
       await awsProvider.request('s3', 'foo', {
-        TemplateURL: pathToTemplate
+        TemplateURL: pathToTemplate,
       });
 
       // Remove the environment variable again to not affect other tests
-      delete process.env.AWS_ENDPOINT_URL
+      delete process.env.AWS_ENDPOINT_URL;
 
       expect(request.called).to.be.true;
-      let templateUrl = request.firstCall.args[2].TemplateURL;
+      const templateUrl = request.firstCall.args[2].TemplateURL;
       expect(templateUrl).to.equal('http://localstack:4566/path/to/template');
     });
 
     it('should not send validateTemplate calls to localstack', async () => {
       const request = sinon.stub(awsProvider, 'request');
-      instance = new LocalstackPlugin(serverless, defaultPluginState)
+      instance = new LocalstackPlugin(serverless, defaultPluginState);
       await simulateBeforeDeployHooks(instance);
 
       await awsProvider.request('S3', 'validateTemplate', {});
 
       expect(request.called).to.be.false;
     });
-
   });
-
-})
+});
