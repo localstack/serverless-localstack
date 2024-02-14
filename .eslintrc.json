@@ -5,6 +5,19 @@
     "jest": true
   },
   "extends": "eslint:recommended",
+  "rules": {
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "indent": ["error", 2],
+    "linebreak-style": ["error", "unix"],
+    "no-console": "warn",           
+    "no-unused-vars": "warn",       
+    "no-alert": "error",            
+    "prefer-const": "error",        
+    "no-var": "error",
+    "arrow-parens": ["error", "always"],
+    "no-tabs": "error"
+  },
   "parserOptions": {
     "ecmaVersion": 2017
   }

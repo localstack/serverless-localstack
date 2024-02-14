@@ -3,9 +3,12 @@ const execSync = require('child_process').execSync;
 const YAML = require('json2yaml');
 const fs = require('fs-extra');
 const path = require('path');
-const serverlessExec = path.join(__dirname, '../../node_modules/.bin/serverless');
-const packageJson = require('../../package.json')
-const rimraf = require('rimraf')
+const serverlessExec = path.join(
+  __dirname,
+  '../../node_modules/.bin/serverless',
+);
+const packageJson = require('../../package.json');
+const rimraf = require('rimraf');
 
 const debug = false;
 
@@ -16,45 +19,46 @@ const defaultConfig = {
     runtime: 'nodejs12.x',
     lambdaHashingVersion: '20201221',
     environment: {
-        LAMBDA_STAGE: '${ssm:/${opt:stage, self:provider.stage}/lambda/common/LAMBDA_STAGE}'
-      }
+      LAMBDA_STAGE:
+        '${ssm:/${opt:stage, self:provider.stage}/lambda/common/LAMBDA_STAGE}',
+    },
   },
-  plugins: [
-    'serverless-localstack'
-  ],
+  plugins: ['serverless-localstack'],
   custom: {
     localstack: {
       host: 'http://localhost',
       debug: debug,
-    }
+    },
   },
   functions: {
     hello: {
-      handler: 'handler.hello'
-    }
-  }
+      handler: 'handler.hello',
+    },
+  },
 };
 
 const installPlugin = (dir) => {
   const pluginsDir = path.join(dir, '.serverless_plugins');
   fs.mkdirsSync(pluginsDir);
 
-  execSync(`mkdir -p node_modules`, {cwd: dir});
-  execSync(`ln -s ${__dirname}/../../ node_modules/${packageJson.name}`, {cwd: dir});
+  execSync('mkdir -p node_modules', { cwd: dir });
+  execSync(`ln -s ${__dirname}/../../ node_modules/${packageJson.name}`, {
+    cwd: dir,
+  });
 };
 
-const execServerless = (arguments, dir) => {
+const execServerless = (myArguments, dir) => {
   process.chdir(dir);
 
-  execSync(`${serverlessExec} ${arguments}`, {
+  execSync(`${serverlessExec} ${myArguments}`, {
     stdio: 'inherit',
     stderr: 'inherit',
     env: Object.assign({}, process.env, {
       AWS_ACCESS_KEY_ID: 1234,
       AWS_SECRET_ACCESS_KEY: 1234,
       PATH: process.env.PATH,
-      SLS_DEBUG: debug ? '*' : ''
-    })
+      SLS_DEBUG: debug ? '*' : '',
+    }),
   });
 };
 
@@ -75,5 +79,5 @@ exports.deployService = (dir) => {
 };
 
 exports.removeService = (dir) => {
-  rimraf.sync(dir)
+  rimraf.sync(dir);
 };
