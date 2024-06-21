@@ -985,6 +985,50 @@ class LocalstackPlugin {
         return;
       }
     }
+  
+    function patchPreV3() {
+      const utilFile = customResources.getEntry('utils.js');
+      if (utilFile == null) return;
+      const data = utilFile.getData().toString();
+      const legacyPatch = 'AWS.config.s3ForcePathStyle = true;';
+      if (data.includes(legacyPatch)) {
+        createPatchMarker();
+        return true;
+      }
+      const patchIndex = data.indexOf('AWS.config.logger = console;');
+      if (patchIndex === -1) {
+        return false;
+      }
+      const newData =
+        data.slice(0, patchIndex) + legacyPatch + '\n' + data.slice(patchIndex);
+      utilFile.setData(newData);
+      return true;
+    }
+
+    function patchV3() {
+      this.debug(
+        'serverless-localstack: Patching V3',
+      );
+      const customResourcesBucketFile = customResources.getEntry('s3/lib/bucket.js');
+      if (customResourcesBucketFile == null) {
+        // TODO debugging, remove
+        this.log(
+          'serverless-localstack: Could not find file s3/lib/bucket.js to patch.',
+        );
+        return;
+      }
+      const data = customResourcesBucketFile.getData().toString();
+      const oldClientCreation = 'S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY });';
+      const newClientCreation = 'S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY, forcePathStyle: true });';
+      if (data.includes(newClientCreation)) {
+        // patch already done
+        createPatchMarker();
+        return;
+      }
+      const newData = data.replace(oldClientCreation, newClientCreation);
+        
+      customResourcesBucketFile.setData(newData);
+    }
 
     if (fileExists(patchMarker)) {
       this.debug(
@@ -1000,18 +1044,10 @@ class LocalstackPlugin {
     }
 
     const customResources = new AdmZip(zipFilePath);
-    const utilFile = customResources.getEntry('utils.js');
-    if (utilFile == null) return;
-    const data = utilFile.getData().toString();
-    const patch = 'AWS.config.s3ForcePathStyle = true;';
-    if (data.includes(patch)) {
-      createPatchMarker();
-      return;
+
+    if (!patchPreV3.call(this)) {
+      patchV3.call(this);
     }
-    const indexPatch = data.indexOf('AWS.config.logger = console;');
-    const newData =
-      data.slice(0, indexPatch) + patch + '\n' + data.slice(indexPatch);
-    utilFile.setData(newData);
     customResources.writeZip();
     createPatchMarker();
     this.debug(
