@@ -20,6 +20,9 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK = '.webpack/service'; //TODO detect fr
 // Plugin naming and build directory of serverless-webpack plugin
 const TS_PLUGIN_ESBUILD = 'EsbuildServerlessPlugin';
 const TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD = '.esbuild/.build'; //TODO detect from esbuild.config.js
+// Plugin naming and build directory of esbuild built-in with Serverless Framework
+const TS_PLUGIN_BUILTIN_ESBUILD = 'Esbuild';
+const TYPESCRIPT_PLUGIN_BUILD_DIR_BUILTIN_ESBUILD = '.serverless/build'; //TODO detect from esbuild.config.js
 
 // Default AWS endpoint URL
 const DEFAULT_AWS_ENDPOINT_URL = 'http://localhost:4566';
@@ -292,6 +295,13 @@ class LocalstackPlugin {
     if (this.findPlugin(TS_PLUGIN_TSC)) return TS_PLUGIN_TSC;
     if (this.findPlugin(TS_PLUGIN_WEBPACK)) return TS_PLUGIN_WEBPACK;
     if (this.findPlugin(TS_PLUGIN_ESBUILD)) return TS_PLUGIN_ESBUILD;
+    const builtinEsbuildPlugin = this.findPlugin(TS_PLUGIN_BUILTIN_ESBUILD);
+    if (builtinEsbuildPlugin &&
+      builtinEsbuildPlugin.constructor &&
+      typeof builtinEsbuildPlugin.constructor.WillEsBuildRun === 'function' &&
+      builtinEsbuildPlugin.constructor.WillEsBuildRun(this.serverless.configurationInput, this.serverless.serviceDir)) {
+      return TS_PLUGIN_BUILTIN_ESBUILD;
+    }
     return undefined;
   }
 
@@ -303,6 +313,9 @@ class LocalstackPlugin {
       return TYPESCRIPT_PLUGIN_BUILD_DIR_WEBPACK;
     if (TS_PLUGIN === TS_PLUGIN_ESBUILD)
       return TYPESCRIPT_PLUGIN_BUILD_DIR_ESBUILD;
+    if (TS_PLUGIN === TS_PLUGIN_BUILTIN_ESBUILD) {
+      return TYPESCRIPT_PLUGIN_BUILD_DIR_BUILTIN_ESBUILD;
+    }
     return undefined;
   }
 
