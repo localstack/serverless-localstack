@@ -16,7 +16,7 @@ const defaultConfig = {
   service: 'aws-nodejs',
   provider: {
     name: 'aws',
-    runtime: 'nodejs12.x',
+    runtime: 'nodejs20.x',
     lambdaHashingVersion: '20201221',
     environment: {
       LAMBDA_STAGE:

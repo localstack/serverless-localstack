@@ -208,6 +208,8 @@ custom:
 ```
 
 ## Change Log
+* v1.3.1: prevent the mounting of code if the Lambda uses an ECR Image
+* v1.3.0: add support for built-in Esbuild in Serverless Framework v4 #267
 * v1.2.1: Fix custom-resource bucket compatibility with serverless >3.39.0, continue improving support for `AWS_ENDPOINT_URL`
 * v1.2.0: Add docker-compose config and fix autostart when plugin is not active 
 * v1.1.3: Fix replacing host from environment variable `AWS_ENDPOINT_URL`
