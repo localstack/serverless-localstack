@@ -198,10 +198,10 @@ class LocalstackPlugin {
 
     // Patch plugin methods
     function compileFunction(functionName) {
-      if (!this.shouldMountCode()) {
+      const functionObject = this.serverless.service.getFunction(functionName);
+      if (functionObject.image || !this.shouldMountCode()) {
         return compileFunction._functionOriginal.apply(null, arguments);
       }
-      const functionObject = this.serverless.service.getFunction(functionName);
       functionObject.package = functionObject.package || {};
       functionObject.package.artifact = __filename;
       return compileFunction._functionOriginal
