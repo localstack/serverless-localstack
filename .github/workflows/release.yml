@@ -3,7 +3,7 @@ name: Release NPM Package
 on:
   push:
     branches:
-      - main  # Change this to your default branch
+      - master
 
 jobs:
   release:
