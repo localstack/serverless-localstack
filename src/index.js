@@ -27,6 +27,9 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_BUILTIN_ESBUILD = '.serverless/build'; //TODO 
 // Default AWS endpoint URL
 const DEFAULT_AWS_ENDPOINT_URL = 'http://localhost:4566';
 
+// Default LocalStack Image
+const LOCALSTACK_PRO_IMAGE = 'localstack/localstack-pro';
+
 // Cache hostname to avoid unnecessary connection checks
 let resolvedHostname = undefined;
 
@@ -425,6 +428,10 @@ class LocalstackPlugin {
   shouldRunDockerSudo() {
     return (this.config.docker || {}).sudo;
   }
+  
+  getLocalstackImage(){
+    return (this.config.image || process.env.IMAGE_NAME || LOCALSTACK_PRO_IMAGE);
+  }
 
   getStageVariable() {
     const customConfig = this.serverless.service.custom || {};
@@ -531,10 +538,17 @@ class LocalstackPlugin {
       env.LAMBDA_REMOTE_DOCKER = env.LAMBDA_REMOTE_DOCKER || '0';
       env.DOCKER_FLAGS = (env.DOCKER_FLAGS || '') + ` -v ${cwd}:${cwd}`;
       env.START_WEB = env.START_WEB || '0';
+      if (!env.LOCALSTACK_AUTH_TOKEN) {
+        this.log('Warning: LOCALSTACK_AUTH_TOKEN is not set. LocalStack Pro requires an auth token.');
+      }
       const maxBuffer = +env.EXEC_MAXBUFFER || 50 * 1000 * 1000; // 50mb buffer to handle output
       if (this.shouldRunDockerSudo()) {
         env.DOCKER_CMD = 'sudo docker';
       }
+
+
+      env.IMAGE_NAME = this.getLocalstackImage();
+
       const options = { env: env, maxBuffer };
       return exec('localstack start -d', options)
         .then(getContainer)

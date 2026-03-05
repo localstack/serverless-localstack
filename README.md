@@ -7,7 +7,7 @@
 This plugin allows Serverless applications to be deployed and tested on your local machine. Any requests to AWS to be redirected to a running LocalStack instance.
 
 Pre-requisites:
-* LocalStack
+* LocalStack Pro (requires `LOCALSTACK_AUTH_TOKEN` environment variable)
 
 ## Installation
 
@@ -56,6 +56,7 @@ custom:
       # Enable this flag to run "docker ..." commands as sudo
       sudo: False
       compose_file: /home/localstack_compose.yml # optional to use docker compose instead of docker or localstack cli
+    image: localstack/localstack-pro # Docker image to use
   stages:
     local:
       ...
@@ -64,6 +65,7 @@ custom:
 ### Configuration via environment variables
 
 The following environment variables can be configured (taking precedence over the values in `serverless.yml`):
+* `LOCALSTACK_AUTH_TOKEN`: **Required.** Your LocalStack auth token for LocalStack Pro. Obtain one from [LocalStack](https://app.localstack.cloud/).
 * `AWS_ENDPOINT_URL`: LocalStack endpoint URL to connect to (default: `http://localhost:4566`). This is the recommended configuration, and replaces the deprecated config options (`EDGE_PORT`/`LOCALSTACK_HOSTNAME`/`USE_SSL`) below.
 * `EDGE_PORT`: LocalStack edge port to connect to (deprecated; default: `4566`)
 * `LOCALSTACK_HOSTNAME`: LocalStack host name to connect to (deprecated; default: `localhost`)
@@ -208,6 +210,7 @@ custom:
 ```
 
 ## Change Log
+* v1.4.0: Use LocalStack Pro image (`localstack/localstack-pro`) by default, require `LOCALSTACK_AUTH_TOKEN`. Addition of `image` config var
 * v1.3.1: prevent the mounting of code if the Lambda uses an ECR Image
 * v1.3.0: add support for built-in Esbuild in Serverless Framework v4 #267
 * v1.2.1: Fix custom-resource bucket compatibility with serverless >3.39.0, continue improving support for `AWS_ENDPOINT_URL`
