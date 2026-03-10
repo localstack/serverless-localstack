@@ -27,6 +27,9 @@ const TYPESCRIPT_PLUGIN_BUILD_DIR_BUILTIN_ESBUILD = '.serverless/build'; //TODO 
 // Default AWS endpoint URL
 const DEFAULT_AWS_ENDPOINT_URL = 'http://localhost:4566';
 
+// Default LocalStack Image
+const LOCALSTACK_PRO_IMAGE = 'localstack/localstack-pro';
+
 // Cache hostname to avoid unnecessary connection checks
 let resolvedHostname = undefined;
 
@@ -425,6 +428,10 @@ class LocalstackPlugin {
   shouldRunDockerSudo() {
     return (this.config.docker || {}).sudo;
   }
+  
+  getLocalstackImage(){
+    return (this.config.image || process.env.IMAGE_NAME || LOCALSTACK_PRO_IMAGE);
+  }
 
   getStageVariable() {
     const customConfig = this.serverless.service.custom || {};
@@ -535,6 +542,10 @@ class LocalstackPlugin {
       if (this.shouldRunDockerSudo()) {
         env.DOCKER_CMD = 'sudo docker';
       }
+
+
+      env.IMAGE_NAME = this.getLocalstackImage();
+
       const options = { env: env, maxBuffer };
       return exec('localstack start -d', options)
         .then(getContainer)

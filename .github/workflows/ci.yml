@@ -54,10 +54,13 @@ jobs:
           fi
 
       - name: Start LocalStack
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          pip install localstack awscli-local[ver1]
-          docker pull localstack/localstack
-          localstack start -d
+          pip install localstack 
+          docker pull localstack/localstack-pro
+          localstack auth set-token $LOCALSTACK_AUTH_TOKEN
+          localstack start -d 
           localstack wait -t 30
 
       - name: Run Lint and Test
