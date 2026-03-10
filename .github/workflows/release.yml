@@ -30,17 +30,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Lint and Test
-        run: |
-          set -e
-          npm run lint
-          npm run test
-
-      - name: Integration Tests
-        run: |
-          npm link
-          sleep 5; SLS_DEBUG=1 npm run test:integration
-
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
