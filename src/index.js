@@ -1042,8 +1042,8 @@ class LocalstackPlugin {
         return;
       }
       const data = customResourcesBucketFile.getData().toString();
-      const oldClientCreation = 'S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY });';
-      const newClientCreation = 'S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY, forcePathStyle: true });';
+      const oldClientCreation = 'new S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY })';
+      const newClientCreation = 'new S3Client({ maxAttempts: MAX_AWS_REQUEST_TRY, forcePathStyle: true })';
       if (data.includes(newClientCreation)) {
         // patch already done
         createPatchMarker();
